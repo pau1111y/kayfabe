@@ -1,5 +1,5 @@
 import React from 'react';
-import { Goal, Promo, GoalTier } from '../../types';
+import type { Goal, Promo, GoalTier } from '../../types';
 import { GoalCard } from './GoalCard';
 
 interface GoalListProps {

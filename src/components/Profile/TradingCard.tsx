@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserProfile, Promo, Goal, Belt } from '../../types';
+import type { UserProfile, Promo, Goal, Belt } from '../../types';
 import { getCurrentTitle, getNextTitle, getXPToNextTitle, getStreakMultiplier } from '../../utils/xp';
 
 interface TradingCardProps {

@@ -1,10 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-kayfabe-black: #000000;
+  --color-kayfabe-white: #FFFFFF;
+  --color-kayfabe-cream: #F5F5F5;
+  --color-kayfabe-gold: #C9A227;
+  --color-kayfabe-red: #8B3A3A;
+  --color-kayfabe-gray-dark: #333333;
+  --color-kayfabe-gray-medium: #666666;
+  --color-kayfabe-gray-light: #CCCCCC;
+
+  --font-typewriter: "Courier New", Courier, monospace;
+  --font-display: "Arial Black", Arial, sans-serif;
+}
 
 @layer base {
   body {
-    @apply bg-kayfabe-black text-kayfabe-cream font-typewriter;
+    @apply bg-kayfabe-black text-kayfabe-cream;
+    font-family: var(--font-typewriter);
   }
 }
 
@@ -22,14 +35,17 @@
   }
 
   .input-field {
-    @apply bg-transparent border border-kayfabe-gray-medium text-kayfabe-cream p-4 w-full font-typewriter focus:border-kayfabe-gold focus:outline-none;
+    @apply bg-transparent border border-kayfabe-gray-medium text-kayfabe-cream p-4 w-full focus:border-kayfabe-gold focus:outline-none;
+    font-family: var(--font-typewriter);
   }
 
   .heading-1 {
-    @apply text-3xl font-display uppercase tracking-wider text-kayfabe-cream;
+    @apply text-3xl font-bold uppercase tracking-wider text-kayfabe-cream;
+    font-family: var(--font-display);
   }
 
   .heading-2 {
-    @apply text-xl font-display uppercase tracking-wide text-kayfabe-gray-light;
+    @apply text-xl font-bold uppercase tracking-wide text-kayfabe-gray-light;
+    font-family: var(--font-display);
   }
 }

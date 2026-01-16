@@ -1,5 +1,5 @@
 import React from 'react';
-import { Belt } from '../../types';
+import type { Belt } from '../../types';
 
 interface BeltDisplayProps {
   belts: Belt[];

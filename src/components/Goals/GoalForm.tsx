@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GoalTier } from '../../types';
+import type { GoalTier } from '../../types';
 
 interface GoalFormProps {
   onSubmit: (title: string, tier: GoalTier) => void;

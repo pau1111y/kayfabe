@@ -1,4 +1,4 @@
-import { AppData, Belt } from '../types';
+import type { AppData, Belt } from '../types';
 
 export const checkAchievements = (data: AppData): Belt[] => {
   const belts = [...data.belts];

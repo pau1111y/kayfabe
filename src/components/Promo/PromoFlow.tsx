@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PromoType, Promo, Goal, Impact } from '../../types';
+import type { PromoType, Promo, Goal, Impact } from '../../types';
 import { FaceHeelSelector } from './FaceHeelSelector';
 import { PromptDisplay } from './PromptDisplay';
 import { PromoEditor } from './PromoEditor';

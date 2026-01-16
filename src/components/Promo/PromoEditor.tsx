@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { PromoType } from '../../types';
-import { Button } from '../Shared/Button';
+import type { PromoType } from '../../types';
 
 interface PromoEditorProps {
   type: PromoType;

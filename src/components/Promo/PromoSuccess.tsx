@@ -1,5 +1,5 @@
 import React from 'react';
-import { PromoType } from '../../types';
+import type { PromoType } from '../../types';
 
 interface PromoSuccessProps {
   type: PromoType;

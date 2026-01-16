@@ -1,5 +1,5 @@
 import React from 'react';
-import { Goal, Promo } from '../../types';
+import type { Goal, Promo } from '../../types';
 
 interface GoalCardProps {
   goal: Goal;

@@ -1,4 +1,4 @@
-import { AppData, UserProfile, Promo, Goal, Belt } from '../types';
+import type { AppData, Belt } from '../types';
 
 const STORAGE_KEY = 'kayfabe_data';
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Navigation } from './components/Layout/Navigation';
 import { PromoFlow } from './components/Promo/PromoFlow';
 import { PromoList } from './components/Promo/PromoList';
@@ -10,7 +10,7 @@ import { TradingCard } from './components/Profile/TradingCard';
 import { StreakDisplay } from './components/Profile/StreakDisplay';
 import { BeltDisplay } from './components/Profile/BeltDisplay';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { AppData, Promo, Goal, GoalTier } from './types';
+import type { AppData, Promo, Goal, GoalTier, GoalStatus } from './types';
 import { getDefaultAppData, generateId } from './utils/storage';
 import { checkAchievements } from './utils/achievements';
 
@@ -65,7 +65,7 @@ function App() {
         ...prev,
         goals: prev.goals.map(g =>
           g.id === goalId
-            ? { ...g, status: 'completed', completedAt: Date.now(), victoryPromo }
+            ? { ...g, status: 'completed' as GoalStatus, completedAt: Date.now(), victoryPromo }
             : g
         ),
         user: prev.user ? {

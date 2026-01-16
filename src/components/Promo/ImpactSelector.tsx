@@ -1,5 +1,5 @@
 import React from 'react';
-import { Impact } from '../../types';
+import type { Impact } from '../../types';
 
 interface ImpactSelectorProps {
   selected: Impact | null;

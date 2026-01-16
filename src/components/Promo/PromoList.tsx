@@ -1,5 +1,5 @@
 import React from 'react';
-import { Promo } from '../../types';
+import type { Promo } from '../../types';
 
 interface PromoListProps {
   promos: Promo[];
