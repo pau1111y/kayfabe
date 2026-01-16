@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-kayfabe-black text-kayfabe-cream font-typewriter;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-kayfabe-cream text-kayfabe-black px-6 py-3 font-bold uppercase tracking-wide hover:bg-kayfabe-gold transition-colors;
+  }
+
+  .btn-secondary {
+    @apply border border-kayfabe-cream text-kayfabe-cream px-6 py-3 font-bold uppercase tracking-wide hover:bg-kayfabe-cream hover:text-kayfabe-black transition-colors;
+  }
+
+  .card {
+    @apply border border-kayfabe-gray-medium p-6 bg-kayfabe-black;
+  }
+
+  .input-field {
+    @apply bg-transparent border border-kayfabe-gray-medium text-kayfabe-cream p-4 w-full font-typewriter focus:border-kayfabe-gold focus:outline-none;
+  }
+
+  .heading-1 {
+    @apply text-3xl font-display uppercase tracking-wider text-kayfabe-cream;
+  }
+
+  .heading-2 {
+    @apply text-xl font-display uppercase tracking-wide text-kayfabe-gray-light;
+  }
+}
