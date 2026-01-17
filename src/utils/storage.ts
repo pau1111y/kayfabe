@@ -2,7 +2,7 @@ import type { AppData, Belt } from '../types';
 
 const STORAGE_KEY = 'kayfabe_data';
 
-const DEFAULT_BELTS: Belt[] = [
+export const DEFAULT_BELTS: Belt[] = [
   { id: 'ironman', name: 'Ironman Championship', requirement: '30-day streak', earnedAt: null },
   { id: 'hardcore', name: 'Hardcore Championship', requirement: '10 heel promos with face follow-ups', earnedAt: null },
   { id: 'tagteam', name: 'Tag Team Championship', requirement: 'Invite a friend who logs 7 days', earnedAt: null },
@@ -13,7 +13,7 @@ const DEFAULT_BELTS: Belt[] = [
   { id: 'grandslam', name: 'Grand Slam Champion', requirement: 'Hold 4+ belts simultaneously', earnedAt: null },
 ];
 
-const DEFAULT_HABITS = [
+export const DEFAULT_HABITS = [
   { id: 'prayers', name: 'Say your prayers', isHardcoded: true, enabled: true },
   { id: 'vitamins', name: 'Eat your vitamins', isHardcoded: true, enabled: true },
   { id: 'bed', name: 'Made the bed', isHardcoded: false, enabled: true },
