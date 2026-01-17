@@ -97,7 +97,7 @@ export const supabaseService = {
             updates: [],
           } : null,
           completedBigOnes: [],
-          hasCompletedOnboarding: true,
+          hasCompletedOnboarding: profile.has_completed_onboarding || false,
         },
         promos: (promos || []).map(p => ({
           id: p.id,
