@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   longest_streak INTEGER NOT NULL DEFAULT 0,
   last_active_date DATE NOT NULL DEFAULT CURRENT_DATE,
   sound_enabled BOOLEAN NOT NULL DEFAULT true,
+  selected_avatar TEXT DEFAULT 'avatar-rookie-default',
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -105,6 +106,18 @@ CREATE TABLE IF NOT EXISTS public.run_ins (
   last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- Create avatars table
+CREATE TABLE IF NOT EXISTS public.avatars (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  avatar_id TEXT NOT NULL,
+  unlocked_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, avatar_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_avatars_user_id ON public.avatars(user_id);
+
 -- Enable Row Level Security
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.the_big_one ENABLE ROW LEVEL SECURITY;
@@ -115,6 +128,7 @@ ALTER TABLE public.habits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.habit_completions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.quick_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.run_ins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.avatars ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for profiles
 CREATE POLICY "Users can view own profile"
@@ -290,4 +304,21 @@ CREATE POLICY "Users can update own run-ins"
 
 CREATE POLICY "Users can delete own run-ins"
   ON public.run_ins FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Create policies for avatars
+CREATE POLICY "Users can view own avatars"
+  ON public.avatars FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own avatars"
+  ON public.avatars FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own avatars"
+  ON public.avatars FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own avatars"
+  ON public.avatars FOR DELETE
   USING (auth.uid() = user_id);

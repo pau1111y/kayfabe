@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Skull -->
+  <ellipse cx="64" cy="56" rx="36" ry="40" fill="#F5F5DC"/>
+  <!-- Eye sockets -->
+  <ellipse cx="52" cy="52" rx="8" ry="12" fill="#0A0A0A"/>
+  <ellipse cx="76" cy="52" rx="8" ry="12" fill="#0A0A0A"/>
+  <!-- Nose cavity -->
+  <polygon points="64,68 58,76 70,76" fill="#0A0A0A"/>
+  <!-- Jaw -->
+  <rect x="44" y="84" width="40" height="16" rx="8" fill="#FFD700"/>
+  <!-- Teeth -->
+  <rect x="50" y="84" width="4" height="8" fill="#0A0A0A" opacity="0.3"/>
+  <rect x="58" y="84" width="4" height="8" fill="#0A0A0A" opacity="0.3"/>
+  <rect x="66" y="84" width="4" height="8" fill="#0A0A0A" opacity="0.3"/>
+  <rect x="74" y="84" width="4" height="8" fill="#0A0A0A" opacity="0.3"/>
+</svg>

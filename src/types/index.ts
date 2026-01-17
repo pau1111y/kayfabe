@@ -11,6 +11,15 @@ export interface BigOneUpdate {
   timestamp: number;
 }
 
+export interface Avatar {
+  id: string;
+  name: string;
+  svgPath: string;
+  unlockedAtXP: number;
+  unlockedAtTitle?: string;
+  description: string;
+}
+
 export interface UserProfile {
   id: string;
   ringName: string;
@@ -21,6 +30,7 @@ export interface UserProfile {
   longestStreak: number;
   lastActiveDate: string;
   soundEnabled: boolean;
+  selectedAvatar: string;
   theBigOne: {
     description: string;
     percentage: number;
@@ -125,4 +135,5 @@ export interface AppData {
   openingContest: OpeningContest;
   belts: Belt[];
   midcardConfig: MidcardConfig;
+  availableAvatars: Avatar[];
 }

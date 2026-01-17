@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Flexed bicep -->
+  <ellipse cx="64" cy="64" rx="32" ry="40" fill="#FFD700"/>
+  <!-- Forearm -->
+  <rect x="48" y="88" width="32" height="24" rx="6" fill="#F5F5DC"/>
+  <!-- Muscle definition -->
+  <path d="M 48 60 Q 64 50, 80 60" stroke="#0A0A0A" stroke-width="2" fill="none"/>
+  <path d="M 50 70 Q 64 64, 78 70" stroke="#0A0A0A" stroke-width="2" fill="none"/>
+  <!-- Peak -->
+  <ellipse cx="64" cy="52" rx="16" ry="20" fill="#F5F5DC"/>
+</svg>

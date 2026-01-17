@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Hall of Fame plaque -->
+  <rect x="28" y="32" width="72" height="64" rx="4" fill="#FFD700"/>
+  <!-- Inner frame -->
+  <rect x="36" y="40" width="56" height="48" rx="2" fill="#F5F5DC"/>
+  <!-- HOF letters -->
+  <text x="64" y="68" font-family="Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#0A0A0A">HOF</text>
+  <!-- Stars -->
+  <polygon points="64,48 66,52 70,52 67,55 68,59 64,56 60,59 61,55 58,52 62,52" fill="#FFD700"/>
+  <polygon points="48,44 50,48 54,48 51,51 52,55 48,52 44,55 45,51 42,48 46,48" fill="#FFD700"/>
+  <polygon points="80,44 82,48 86,48 83,51 84,55 80,52 76,55 77,51 74,48 78,48" fill="#FFD700"/>
+  <!-- Base -->
+  <rect x="40" y="96" width="48" height="8" fill="#0A0A0A" opacity="0.3"/>
+</svg>

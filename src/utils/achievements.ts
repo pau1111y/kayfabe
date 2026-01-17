@@ -1,4 +1,20 @@
-import type { AppData, Belt } from '../types';
+import type { AppData, Belt, Avatar } from '../types';
+import { AVATAR_CATALOG } from '../data/avatars';
+
+export const checkAvatarUnlocks = (xp: number, currentAvatars: Avatar[]): Avatar[] => {
+  const newUnlocks: Avatar[] = [];
+
+  AVATAR_CATALOG.forEach(avatar => {
+    const alreadyUnlocked = currentAvatars.some(a => a.id === avatar.id);
+    const meetsXPRequirement = xp >= avatar.unlockedAtXP;
+
+    if (!alreadyUnlocked && meetsXPRequirement) {
+      newUnlocks.push(avatar);
+    }
+  });
+
+  return newUnlocks;
+};
 
 export const checkAchievements = (data: AppData): Belt[] => {
   const belts = [...data.belts];

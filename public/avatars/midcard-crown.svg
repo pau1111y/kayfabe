@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Crown base -->
+  <rect x="32" y="72" width="64" height="32" rx="4" fill="#FFD700"/>
+  <!-- Crown points -->
+  <polygon points="32,72 40,40 48,72" fill="#FFD700"/>
+  <polygon points="48,72 56,32 64,72" fill="#FFD700"/>
+  <polygon points="64,72 72,32 80,72" fill="#FFD700"/>
+  <polygon points="80,72 88,40 96,72" fill="#FFD700"/>
+  <!-- Gems -->
+  <circle cx="48" cy="84" r="4" fill="#F5F5DC"/>
+  <circle cx="64" cy="84" r="4" fill="#F5F5DC"/>
+  <circle cx="80" cy="84" r="4" fill="#F5F5DC"/>
+</svg>

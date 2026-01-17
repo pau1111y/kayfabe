@@ -6,6 +6,8 @@ import { GoalCompletion } from './components/Goals/GoalCompletion';
 import { TradingCard } from './components/Profile/TradingCard';
 import { StreakDisplay } from './components/Profile/StreakDisplay';
 import { BeltDisplay } from './components/Profile/BeltDisplay';
+import { ProfileEditor } from './components/Profile/ProfileEditor';
+import { OnboardingFlow } from './components/Onboarding/OnboardingFlow';
 import { AuthScreen } from './components/Auth/AuthScreen';
 import { HabitList } from './components/OpeningContest/HabitList';
 import { OpeningContestSettings } from './components/OpeningContest/OpeningContestSettings';
@@ -20,10 +22,11 @@ import { DarkMatchFlow } from './components/DarkMatch/DarkMatchFlow';
 import { useAuth } from './contexts/AuthContext';
 import type { AppData, Promo, Goal, GoalTier, GoalStatus, QuickTag, RunIn, TimeBlock, BigOneUpdate } from './types';
 import { generateId } from './utils/storage';
-import { checkAchievements } from './utils/achievements';
+import { checkAchievements, checkAvatarUnlocks } from './utils/achievements';
 import { calculateXPWithMultiplier } from './utils/xp';
 import { checkAndResetDaily } from './utils/dailyReset';
 import { supabaseService } from './services/supabaseService';
+import { AVATAR_CATALOG } from './data/avatars';
 
 function App() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -38,6 +41,7 @@ function App() {
   const [showQuickTag, setShowQuickTag] = useState(false);
   const [showRunIn, setShowRunIn] = useState(false);
   const [showDarkMatch, setShowDarkMatch] = useState(false);
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
 
   // Load user data from Supabase when user logs in
   useEffect(() => {
@@ -152,6 +156,60 @@ function App() {
   // Check if user needs onboarding
   const needsOnboarding = !appData?.user?.hasCompletedOnboarding;
 
+  // Onboarding handlers
+  const handleOnboardingComplete = async (ringName: string, epithet: string, avatarId: string) => {
+    if (!user) return;
+
+    await supabaseService.updateProfile({
+      ringName,
+      epithet,
+    });
+    await supabaseService.updateSelectedAvatar(avatarId);
+
+    // Reload data
+    const freshData = await supabaseService.loadUserData();
+    if (freshData) {
+      setAppData(freshData);
+    }
+  };
+
+  const handleCheckUniqueness = async (ringName: string, epithet: string) => {
+    return await supabaseService.checkWrestlerUniqueness(ringName, epithet);
+  };
+
+  // Profile editor handlers
+  const handleEditProfile = () => {
+    setShowProfileEditor(true);
+  };
+
+  const handleProfileSave = async (ringName: string, epithet: string, avatarId: string) => {
+    if (!appData || !user) return;
+
+    await supabaseService.updateProfile({
+      ringName,
+      epithet,
+    });
+    await supabaseService.updateSelectedAvatar(avatarId);
+
+    // Update local state
+    const updated: AppData = {
+      ...appData,
+      user: appData.user ? {
+        ...appData.user,
+        ringName,
+        epithet,
+        selectedAvatar: avatarId,
+      } : null,
+    };
+
+    setAppData(updated);
+    setShowProfileEditor(false);
+  };
+
+  const handleCheckUniquenessForEdit = async (ringName: string, epithet: string, excludeUserId: string) => {
+    return await supabaseService.checkWrestlerUniqueness(ringName, epithet, excludeUserId);
+  };
+
   const handlePromoComplete = async (promo: Promo) => {
     if (!appData || !appData.user) return;
 
@@ -174,6 +232,15 @@ function App() {
       },
     };
     updated.belts = checkAchievements(updated);
+
+    // Check for avatar unlocks
+    if (updated.user) {
+      const newlyUnlockedAvatars = checkAvatarUnlocks(updated.user.xp, appData.availableAvatars);
+      if (newlyUnlockedAvatars.length > 0) {
+        updated.availableAvatars = [...appData.availableAvatars, ...newlyUnlockedAvatars];
+        await supabaseService.unlockAvatars(newlyUnlockedAvatars.map(a => a.id));
+      }
+    }
 
     // Save updated XP and belts to Supabase
     if (updated.user) {
@@ -242,6 +309,15 @@ function App() {
     };
     updated.belts = checkAchievements(updated);
 
+    // Check for avatar unlocks
+    if (updated.user) {
+      const newlyUnlockedAvatars = checkAvatarUnlocks(updated.user.xp, appData.availableAvatars);
+      if (newlyUnlockedAvatars.length > 0) {
+        updated.availableAvatars = [...appData.availableAvatars, ...newlyUnlockedAvatars];
+        await supabaseService.unlockAvatars(newlyUnlockedAvatars.map(a => a.id));
+      }
+    }
+
     // Save updated XP and belts to Supabase
     if (updated.user) {
       await supabaseService.updateProfile({ xp: updated.user.xp });
@@ -306,6 +382,15 @@ function App() {
       },
     };
     updated.belts = checkAchievements(updated);
+
+    // Check for avatar unlocks
+    if (updated.user) {
+      const newlyUnlockedAvatars = checkAvatarUnlocks(updated.user.xp, appData.availableAvatars);
+      if (newlyUnlockedAvatars.length > 0) {
+        updated.availableAvatars = [...appData.availableAvatars, ...newlyUnlockedAvatars];
+        await supabaseService.unlockAvatars(newlyUnlockedAvatars.map(a => a.id));
+      }
+    }
 
     // Save updated XP and belts to Supabase
     if (updated.user) {
@@ -529,34 +614,14 @@ function App() {
   };
 
   if (needsOnboarding) {
+    const starterAvatars = AVATAR_CATALOG.filter(a => a.unlockedAtXP === 0);
+
     return (
-      <div className="min-h-screen bg-kayfabe-black flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <h1 className="heading-1 mb-8">KAYFABE</h1>
-          <p className="text-kayfabe-gray-light mb-8">
-            Your brain is a promoter.<br />
-            It pitches storylines all day.<br />
-            Choose which voice books the next segment.
-          </p>
-          <button
-            className="btn-primary"
-            onClick={async () => {
-              if (!user) return;
-
-              // Update profile in Supabase to mark onboarding as complete
-              await supabaseService.updateProfile({
-                ringName: 'New Talent',
-              });
-
-              // Reload data
-              const freshData = await supabaseService.loadUserData();
-              setAppData(freshData);
-            }}
-          >
-            Enter the Business
-          </button>
-        </div>
-      </div>
+      <OnboardingFlow
+        starterAvatars={starterAvatars}
+        onComplete={handleOnboardingComplete}
+        onCheckUniqueness={handleCheckUniqueness}
+      />
     );
   }
 
@@ -622,6 +687,25 @@ function App() {
         );
 
       case 'profile':
+        if (showProfileEditor) {
+          return (
+            <div className="space-y-6">
+              <ProfileEditor
+                currentRingName={appData!.user!.ringName}
+                currentEpithet={appData!.user!.epithet || ''}
+                currentAvatarId={appData!.user!.selectedAvatar}
+                currentUserId={appData!.user!.id}
+                availableAvatars={appData!.availableAvatars}
+                onSave={handleProfileSave}
+                onCancel={() => setShowProfileEditor(false)}
+                onCheckUniqueness={handleCheckUniquenessForEdit}
+              />
+            </div>
+          );
+        }
+
+        const selectedAvatarData = appData!.availableAvatars.find(a => a.id === appData!.user!.selectedAvatar);
+
         return (
           <div className="space-y-6">
             <TradingCard
@@ -629,6 +713,8 @@ function App() {
               promos={appData!.promos}
               goals={appData!.goals}
               belts={appData!.belts}
+              selectedAvatar={selectedAvatarData}
+              onEditProfile={handleEditProfile}
             />
             <StreakDisplay
               currentStreak={appData!.user!.currentStreak}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Flames -->
+  <path d="M 64 100 Q 44 90, 40 70 Q 38 50, 50 40 Q 48 30, 64 20 Q 80 30, 78 40 Q 90 50, 88 70 Q 84 90, 64 100 Z" fill="#FFD700"/>
+  <!-- Inner flame -->
+  <path d="M 64 90 Q 50 85, 48 70 Q 46 55, 56 48 Q 54 42, 64 35 Q 74 42, 72 48 Q 82 55, 80 70 Q 78 85, 64 90 Z" fill="#F5F5DC"/>
+  <!-- Hot spot -->
+  <circle cx="64" cy="60" r="8" fill="#0A0A0A" opacity="0.3"/>
+</svg>

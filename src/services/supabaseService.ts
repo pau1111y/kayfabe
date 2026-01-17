@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
-import type { AppData, Promo, Goal, Belt, QuickTag, RunIn, Habit } from '../types';
+import type { AppData, Promo, Goal, Belt, QuickTag, RunIn, Habit, Avatar } from '../types';
 import { DEFAULT_BELTS, DEFAULT_HABITS } from '../utils/storage';
+import { AVATAR_CATALOG } from '../data/avatars';
 
 export const supabaseService = {
   // Load all user data from Supabase
@@ -88,6 +89,7 @@ export const supabaseService = {
           longestStreak: profile.longest_streak,
           lastActiveDate: profile.last_active_date,
           soundEnabled: profile.sound_enabled,
+          selectedAvatar: profile.selected_avatar || 'avatar-rookie-default',
           theBigOne: bigOne ? {
             description: bigOne.description,
             percentage: bigOne.percentage,
@@ -153,7 +155,19 @@ export const supabaseService = {
           dailyBudget: 24,
           lastResetDate: today,
         },
+        availableAvatars: [],
       };
+
+      // Load avatars
+      const avatars = await this.loadUserAvatars();
+
+      // If no avatars, initialize starters
+      if (avatars.length === 0) {
+        await this.initializeStarterAvatars();
+        appData.availableAvatars = await this.loadUserAvatars();
+      } else {
+        appData.availableAvatars = avatars;
+      }
 
       return appData;
     } catch (error) {
@@ -485,5 +499,90 @@ export const supabaseService = {
       currentStreak: newStreak,
       longestStreak: newLongestStreak,
     };
+  },
+
+  // Load user's unlocked avatars
+  async loadUserAvatars(): Promise<Avatar[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('avatars')
+      .select('avatar_id, unlocked_at')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error loading avatars:', error);
+      return [];
+    }
+
+    return (data || []).map(row => {
+      const catalogAvatar = AVATAR_CATALOG.find(a => a.id === row.avatar_id);
+      return catalogAvatar!;
+    }).filter(Boolean);
+  },
+
+  // Unlock new avatars
+  async unlockAvatars(avatarIds: string[]): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const rows = avatarIds.map(id => ({
+      user_id: user.id,
+      avatar_id: id,
+    }));
+
+    const { error } = await supabase
+      .from('avatars')
+      .insert(rows);
+
+    if (error) {
+      console.error('Error unlocking avatars:', error);
+      throw error;
+    }
+  },
+
+  // Update selected avatar
+  async updateSelectedAvatar(avatarId: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ selected_avatar: avatarId })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error updating selected avatar:', error);
+      throw error;
+    }
+  },
+
+  // Initialize starter avatars on first login
+  async initializeStarterAvatars(): Promise<void> {
+    const starterAvatars = AVATAR_CATALOG.filter(a => a.unlockedAtXP === 0);
+    await this.unlockAvatars(starterAvatars.map(a => a.id));
+  },
+
+  // Check if wrestler name + epithet combination is unique
+  async checkWrestlerUniqueness(ringName: string, epithet: string, excludeUserId?: string): Promise<boolean> {
+    let query = supabase
+      .from('profiles')
+      .select('id')
+      .eq('ring_name', ringName)
+      .eq('epithet', epithet);
+
+    if (excludeUserId) {
+      query = query.neq('id', excludeUserId);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
+      console.error('Error checking wrestler uniqueness:', error);
+      throw error;
+    }
+
+    return data === null; // Returns true if no match (unique), false if exists
   },
 };

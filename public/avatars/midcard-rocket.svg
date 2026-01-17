@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Rocket body -->
+  <ellipse cx="64" cy="60" rx="20" ry="48" fill="#FFD700"/>
+  <!-- Rocket nose -->
+  <polygon points="64,12 44,36 84,36" fill="#F5F5DC"/>
+  <!-- Fins -->
+  <polygon points="44,72 32,88 44,88" fill="#F5F5DC"/>
+  <polygon points="84,72 96,88 84,88" fill="#F5F5DC"/>
+  <!-- Exhaust -->
+  <polygon points="54,108 64,116 74,108 64,92" fill="#FFD700" opacity="0.7"/>
+  <!-- Window -->
+  <circle cx="64" cy="52" r="8" fill="#0A0A0A" opacity="0.3"/>
+</svg>

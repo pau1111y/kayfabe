@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Rising star -->
+  <polygon points="64,16 73,48 106,48 80,68 90,100 64,80 38,100 48,68 22,48 55,48" fill="#FFD700"/>
+  <!-- Inner star -->
+  <polygon points="64,32 70,52 90,52 74,64 80,84 64,72 48,84 54,64 38,52 58,52" fill="#F5F5DC"/>
+  <!-- Shine effect -->
+  <circle cx="74" cy="36" r="4" fill="#F5F5DC" opacity="0.8"/>
+</svg>

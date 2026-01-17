@@ -1,5 +1,5 @@
 import React from 'react';
-import type { UserProfile, Promo, Goal, Belt } from '../../types';
+import type { UserProfile, Promo, Goal, Belt, Avatar } from '../../types';
 import { getCurrentTitle, getNextTitle, getXPToNextTitle, getStreakMultiplier } from '../../utils/xp';
 
 interface TradingCardProps {
@@ -7,9 +7,11 @@ interface TradingCardProps {
   promos: Promo[];
   goals: Goal[];
   belts: Belt[];
+  selectedAvatar: Avatar | undefined;
+  onEditProfile?: () => void;
 }
 
-export const TradingCard: React.FC<TradingCardProps> = ({ user, promos, goals, belts }) => {
+export const TradingCard: React.FC<TradingCardProps> = ({ user, promos, goals, belts, selectedAvatar, onEditProfile }) => {
   const currentTitle = getCurrentTitle(user.xp);
   const nextTitle = getNextTitle(user.xp);
   const xpToNext = getXPToNextTitle(user.xp);
@@ -29,18 +31,32 @@ export const TradingCard: React.FC<TradingCardProps> = ({ user, promos, goals, b
     <div className="card border-2 border-kayfabe-gray-medium">
       {/* Header */}
       <div className="text-center pb-4 border-b border-kayfabe-gray-dark">
-        <div className="w-20 h-20 mx-auto mb-3 border-2 border-kayfabe-gray-medium rounded-full flex items-center justify-center text-4xl">
-          🎭
+        <div className="w-24 h-24 mx-auto mb-4">
+          {selectedAvatar ? (
+            <img src={selectedAvatar.svgPath} alt={selectedAvatar.name} className="w-full h-full" />
+          ) : (
+            <div className="w-full h-full border-2 border-kayfabe-gray-medium rounded-full flex items-center justify-center text-4xl">
+              🎭
+            </div>
+          )}
         </div>
         <h2 className="text-2xl font-bold text-kayfabe-cream uppercase tracking-wider">
           {user.ringName}
         </h2>
         {user.epithet && (
-          <p className="text-kayfabe-gold italic">"The {user.epithet}"</p>
+          <p className="text-kayfabe-gold italic">"{user.epithet}"</p>
         )}
         <p className="text-kayfabe-gray-light text-sm mt-2 uppercase tracking-wider">
           {currentTitle.name}
         </p>
+        {onEditProfile && (
+          <button
+            onClick={onEditProfile}
+            className="text-kayfabe-gold text-sm hover:underline mt-2"
+          >
+            ✏️ Edit Profile
+          </button>
+        )}
       </div>
 
       {/* Stats Grid */}

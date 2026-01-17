@@ -36,6 +36,7 @@ export const getDefaultAppData = (): AppData => ({
   goals: [],
   quickTags: [],
   runIns: [],
+  availableAvatars: [],
   openingContest: {
     habits: DEFAULT_HABITS,
     completedToday: [],

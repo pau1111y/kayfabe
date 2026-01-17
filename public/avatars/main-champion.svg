@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Championship belt - larger and more detailed -->
+  <rect x="20" y="52" width="88" height="24" rx="4" fill="#FFD700"/>
+  <!-- Center plate -->
+  <rect x="44" y="44" width="40" height="40" rx="4" fill="#F5F5DC"/>
+  <!-- Side plates -->
+  <rect x="20" y="56" width="20" height="16" rx="2" fill="#0A0A0A" opacity="0.2"/>
+  <rect x="88" y="56" width="20" height="16" rx="2" fill="#0A0A0A" opacity="0.2"/>
+  <!-- Star on center -->
+  <polygon points="64,56 67,63 74,63 68,68 71,75 64,70 57,75 60,68 54,63 61,63" fill="#FFD700"/>
+  <!-- Shine effect -->
+  <circle cx="56" cy="52" r="3" fill="#FFD700" opacity="0.8"/>
+</svg>

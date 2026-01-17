@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Legend medallion -->
+  <circle cx="64" cy="64" r="44" fill="#FFD700"/>
+  <!-- Inner circle -->
+  <circle cx="64" cy="64" r="36" fill="#F5F5DC"/>
+  <!-- Laurel wreath left -->
+  <path d="M 40 64 Q 35 55, 40 46 Q 45 50, 40 64" fill="#FFD700"/>
+  <path d="M 40 64 Q 35 73, 40 82 Q 45 78, 40 64" fill="#FFD700"/>
+  <!-- Laurel wreath right -->
+  <path d="M 88 64 Q 93 55, 88 46 Q 83 50, 88 64" fill="#FFD700"/>
+  <path d="M 88 64 Q 93 73, 88 82 Q 83 78, 88 64" fill="#FFD700"/>
+  <!-- Center star -->
+  <polygon points="64,48 67,58 77,58 69,64 72,74 64,68 56,74 59,64 51,58 61,58" fill="#FFD700"/>
+  <!-- Ribbon -->
+  <rect x="60" y="104" width="8" height="12" fill="#FFD700"/>
+</svg>

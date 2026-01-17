@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Classic wrestler silhouette -->
+  <circle cx="64" cy="48" r="20" fill="#FFD700"/>
+  <!-- Body -->
+  <rect x="48" y="68" width="32" height="40" rx="4" fill="#F5F5DC"/>
+  <!-- Arms -->
+  <rect x="32" y="72" width="16" height="8" rx="4" fill="#F5F5DC"/>
+  <rect x="80" y="72" width="16" height="8" rx="4" fill="#F5F5DC"/>
+  <!-- Details -->
+  <circle cx="56" cy="44" r="2" fill="#0A0A0A"/>
+  <circle cx="72" cy="44" r="2" fill="#0A0A0A"/>
+</svg>

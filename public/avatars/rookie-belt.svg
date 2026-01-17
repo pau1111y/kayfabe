@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Championship belt -->
+  <rect x="24" y="48" width="80" height="32" rx="4" fill="#FFD700"/>
+  <!-- Center plate -->
+  <rect x="48" y="40" width="32" height="48" rx="4" fill="#F5F5DC"/>
+  <!-- Belt strap -->
+  <rect x="16" y="56" width="12" height="16" fill="#0A0A0A"/>
+  <rect x="100" y="56" width="12" height="16" fill="#0A0A0A"/>
+  <!-- Star decoration -->
+  <polygon points="64,56 67,63 74,63 68,68 71,75 64,70 57,75 60,68 54,63 61,63" fill="#FFD700"/>
+</svg>
