@@ -27,6 +27,7 @@ function App() {
   const { user, loading: authLoading, signOut } = useAuth();
   const [appData, setAppData] = useState<AppData | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('home');
   const [isWritingPromo, setIsWritingPromo] = useState(false);
   const [isAddingGoal, setIsAddingGoal] = useState(false);
@@ -44,15 +45,20 @@ function App() {
         return;
       }
 
-      const data = await supabaseService.loadUserData();
+      try {
+        const data = await supabaseService.loadUserData();
 
-      if (data) {
-        setAppData(data);
-      } else {
-        // First time user - initialize belts
-        await supabaseService.initializeBelts();
-        const freshData = await supabaseService.loadUserData();
-        setAppData(freshData);
+        if (data) {
+          setAppData(data);
+        } else {
+          // First time user - initialize belts
+          await supabaseService.initializeBelts();
+          const freshData = await supabaseService.loadUserData();
+          setAppData(freshData);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        setLoadError(error instanceof Error ? error.message : 'Failed to load data');
       }
 
       setDataLoading(false);
@@ -68,6 +74,41 @@ function App() {
         <div className="text-center">
           <h1 className="heading-1 mb-4">KAYFABE</h1>
           <p className="text-kayfabe-gray-light">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error screen if data failed to load
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-kayfabe-black flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <h1 className="heading-1 mb-4">KAYFABE</h1>
+          <div className="card space-y-4">
+            <p className="text-kayfabe-red font-bold">Database Error</p>
+            <p className="text-kayfabe-gray-light text-sm">
+              Unable to load your data. This usually means the database schema needs to be updated.
+            </p>
+            <p className="text-kayfabe-gray-medium text-xs">
+              Check IMPORTANT_UPDATE_SCHEMA.md in the project for instructions.
+            </p>
+            <p className="text-kayfabe-gray-dark text-xs break-all">
+              {loadError}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn-secondary"
+            >
+              Retry
+            </button>
+            <button
+              onClick={signOut}
+              className="text-kayfabe-gray-medium hover:text-kayfabe-cream text-sm"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </div>
     );
