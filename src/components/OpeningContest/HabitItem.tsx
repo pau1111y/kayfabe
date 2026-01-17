@@ -38,7 +38,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({
         <span className={`text-xl ${isCompleted ? 'opacity-100' : 'opacity-30'}`}>
           {isCompleted ? '✓' : '○'}
         </span>
-        <span className={isCompleted ? 'text-kayfabe-gold' : 'text-kayfabe-cream'}>
+        <span className={isCompleted ? 'text-kayfabe-gold line-through' : 'text-kayfabe-cream'}>
           {habit.name}
         </span>
         {habit.isHardcoded && (

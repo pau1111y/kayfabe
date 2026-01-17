@@ -14,6 +14,8 @@ export const BigOneHeadline: React.FC<BigOneHeadlineProps> = ({
   onRequestPromoForChange,
 }) => {
   const [tempPercentage, setTempPercentage] = useState<number | null>(null);
+  const [pendingPercentage, setPendingPercentage] = useState<number | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   if (!bigOne) {
     return (
@@ -26,11 +28,35 @@ export const BigOneHeadline: React.FC<BigOneHeadlineProps> = ({
     );
   }
 
+  // Modified handleSliderChange - just update visual, don't trigger promo
   const handleSliderChange = (value: number) => {
-    if (value !== bigOne.percentage) {
-      setTempPercentage(value);
-      onRequestPromoForChange(bigOne.percentage, value);
+    setTempPercentage(value);
+  };
+
+  // New handler for slider release (onPointerUp or onMouseUp)
+  const handleSliderRelease = () => {
+    const finalValue = tempPercentage !== null ? tempPercentage : bigOne.percentage;
+    if (finalValue !== bigOne.percentage) {
+      setPendingPercentage(finalValue);
+      setShowConfirmation(true);
     }
+  };
+
+  // Handler for confirming change
+  const handleConfirmChange = () => {
+    if (pendingPercentage !== null) {
+      onRequestPromoForChange(bigOne.percentage, pendingPercentage);
+      setShowConfirmation(false);
+      setPendingPercentage(null);
+      setTempPercentage(null);
+    }
+  };
+
+  // Handler for canceling
+  const handleCancelChange = () => {
+    setTempPercentage(bigOne.percentage); // Reset to original
+    setShowConfirmation(false);
+    setPendingPercentage(null);
   };
 
   const currentPercentage = tempPercentage !== null ? tempPercentage : bigOne.percentage;
@@ -67,14 +93,34 @@ export const BigOneHeadline: React.FC<BigOneHeadlineProps> = ({
             max="100"
             value={currentPercentage}
             onChange={(e) => handleSliderChange(Number(e.target.value))}
+            onPointerUp={handleSliderRelease}
+            onMouseUp={handleSliderRelease}
             className="w-full accent-kayfabe-cream mt-2"
           />
 
-          <p className="text-kayfabe-cream/60 text-xs text-center italic">
-            Moving the slider requires cutting a promo
-          </p>
+          {!showConfirmation && (
+            <p className="text-kayfabe-cream/60 text-xs text-center italic">
+              Adjust freely, then confirm to write promo
+            </p>
+          )}
         </div>
       </div>
+
+      {showConfirmation && (
+        <div className="mt-4 card border-kayfabe-gold">
+          <p className="text-kayfabe-cream text-sm mb-3">
+            Confirm change from {bigOne.percentage}% to {pendingPercentage}%?
+          </p>
+          <div className="flex space-x-3">
+            <button onClick={handleCancelChange} className="btn-secondary flex-1">
+              Cancel
+            </button>
+            <button onClick={handleConfirmChange} className="btn-primary flex-1">
+              Confirm & Write Promo
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

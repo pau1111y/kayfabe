@@ -24,13 +24,9 @@ interface PromoFlowProps {
 }
 
 export const PromoFlow: React.FC<PromoFlowProps> = ({ goals, onComplete, onCancel, bigOneContext }) => {
-  const [step, setStep] = useState<FlowStep>(bigOneContext ? 'write' : 'select');
-  const [promoType, setPromoType] = useState<PromoType | null>(bigOneContext ? 'face' : null);
-  const [currentPrompt, setCurrentPrompt] = useState<string | null>(
-    bigOneContext
-      ? `You just moved The Big One from ${bigOneContext.previousPercentage}% to ${bigOneContext.newPercentage}%. What changed? ${bigOneContext.newPercentage > bigOneContext.previousPercentage ? 'What progress did you make?' : 'What setback did you face?'}`
-      : null
-  );
+  const [step, setStep] = useState<FlowStep>('select'); // Always start at select
+  const [promoType, setPromoType] = useState<PromoType | null>(null);
+  const [currentPrompt, setCurrentPrompt] = useState<string | null>(null);
   const [isFreestyle, setIsFreestyle] = useState(false);
   const [content, setContent] = useState('');
   const [storylineId, setStorylineId] = useState<string | null>(null);
@@ -41,7 +37,16 @@ export const PromoFlow: React.FC<PromoFlowProps> = ({ goals, onComplete, onCance
 
   const handleTypeSelect = (type: PromoType) => {
     setPromoType(type);
-    setCurrentPrompt(getRandomPrompt(type));
+    // If Big One context exists, customize the prompt
+    if (bigOneContext) {
+      const contextText = `You just moved The Big One from ${bigOneContext.previousPercentage}% to ${bigOneContext.newPercentage}%.`;
+      const prompt = type === 'face'
+        ? `${contextText} What progress did you make?`
+        : `${contextText} What setback or struggle did you face?`;
+      setCurrentPrompt(prompt);
+    } else {
+      setCurrentPrompt(getRandomPrompt(type));
+    }
     setStep('prompt');
   };
 

@@ -7,14 +7,14 @@ interface GoalFormProps {
 }
 
 const tierOptions: { value: GoalTier; label: string; description: string }[] = [
-  { value: 'opening', label: 'Opening Contest', description: 'Daily habits, routine builders' },
+  { value: 'main', label: 'Main Event ⭐', description: 'Major goals, big projects' },
   { value: 'midcard', label: 'Midcard', description: 'Ongoing work, skill building' },
-  { value: 'main', label: 'Main Event', description: 'Major goals, big projects' },
+  { value: 'opening', label: 'Opening Contest', description: 'Daily habits, routine builders' },
 ];
 
 export const GoalForm: React.FC<GoalFormProps> = ({ onSubmit, onCancel }) => {
   const [title, setTitle] = useState('');
-  const [tier, setTier] = useState<GoalTier>('midcard');
+  const [tier, setTier] = useState<GoalTier>('main');
 
   const handleSubmit = () => {
     if (title.trim()) {

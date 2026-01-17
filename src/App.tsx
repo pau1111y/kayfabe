@@ -72,6 +72,31 @@ function App() {
     loadData();
   }, [user]);
 
+  // Listen for tab visibility changes to check for daily reset
+  useEffect(() => {
+    if (!appData || !user) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const today = new Date().toISOString().split('T')[0];
+        const needsReset =
+          appData.openingContest.lastResetDate !== today ||
+          appData.midcardConfig.lastResetDate !== today;
+
+        if (needsReset) {
+          const resetData = checkAndResetDaily(appData);
+          setAppData(resetData);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [appData, user]);
+
   // Show loading screen while checking auth or loading data
   if (authLoading || dataLoading) {
     return (
