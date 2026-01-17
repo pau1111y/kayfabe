@@ -160,11 +160,17 @@ function App() {
   const handleOnboardingComplete = async (ringName: string, epithet: string, avatarId: string) => {
     if (!user) return;
 
+    // Update profile with ring name and epithet
     await supabaseService.updateProfile({
       ringName,
       epithet,
     });
+
+    // Update selected avatar
     await supabaseService.updateSelectedAvatar(avatarId);
+
+    // Mark onboarding as completed
+    await supabaseService.completeOnboarding();
 
     // Reload data
     const freshData = await supabaseService.loadUserData();

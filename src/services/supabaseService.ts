@@ -558,6 +558,22 @@ export const supabaseService = {
     }
   },
 
+  // Complete onboarding
+  async completeOnboarding(): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ has_completed_onboarding: true })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error completing onboarding:', error);
+      throw error;
+    }
+  },
+
   // Initialize starter avatars on first login
   async initializeStarterAvatars(): Promise<void> {
     const starterAvatars = AVATAR_CATALOG.filter(a => a.unlockedAtXP === 0);

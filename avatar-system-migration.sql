@@ -7,18 +7,65 @@ ALTER TABLE public.profiles
 ADD COLUMN IF NOT EXISTS selected_avatar TEXT DEFAULT 'avatar-rookie-default';
 
 -- Step 2: Make epithet required and add uniqueness constraint
--- First, set a default epithet for existing users who don't have one
-UPDATE public.profiles
-SET epithet = 'The Newcomer'
-WHERE epithet IS NULL OR epithet = '';
+-- First, set a unique epithet for existing users who don't have one
+-- Use a numbered suffix to ensure uniqueness
+DO $$
+DECLARE
+  profile_record RECORD;
+  counter INT;
+  new_epithet TEXT;
+  epithet_exists BOOLEAN;
+BEGIN
+  FOR profile_record IN
+    SELECT id, ring_name, epithet
+    FROM public.profiles
+    WHERE epithet IS NULL OR epithet = ''
+  LOOP
+    counter := 1;
+    new_epithet := 'The Newcomer';
+
+    -- Check if this combination already exists
+    SELECT EXISTS(
+      SELECT 1 FROM public.profiles
+      WHERE ring_name = profile_record.ring_name
+      AND epithet = new_epithet
+    ) INTO epithet_exists;
+
+    -- If it exists, add a number suffix until we find a unique one
+    WHILE epithet_exists LOOP
+      counter := counter + 1;
+      new_epithet := 'The Newcomer #' || counter;
+
+      SELECT EXISTS(
+        SELECT 1 FROM public.profiles
+        WHERE ring_name = profile_record.ring_name
+        AND epithet = new_epithet
+      ) INTO epithet_exists;
+    END LOOP;
+
+    -- Update the profile with the unique epithet
+    UPDATE public.profiles
+    SET epithet = new_epithet
+    WHERE id = profile_record.id;
+  END LOOP;
+END $$;
 
 -- Now make epithet NOT NULL
 ALTER TABLE public.profiles
 ALTER COLUMN epithet SET NOT NULL;
 
 -- Add unique constraint on (ring_name, epithet) combination
-ALTER TABLE public.profiles
-ADD CONSTRAINT IF NOT EXISTS unique_wrestler_identity UNIQUE (ring_name, epithet);
+-- Drop first in case it already exists, then create
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'unique_wrestler_identity'
+  ) THEN
+    ALTER TABLE public.profiles
+    ADD CONSTRAINT unique_wrestler_identity UNIQUE (ring_name, epithet);
+  END IF;
+END $$;
 
 -- Step 3: Create avatars table (if not exists)
 CREATE TABLE IF NOT EXISTS public.avatars (
