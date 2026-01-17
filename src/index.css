@@ -48,4 +48,20 @@
     @apply text-xl font-bold uppercase tracking-wide text-kayfabe-gray-light;
     font-family: var(--font-display);
   }
+
+  .big-one-banner {
+    @apply bg-gradient-to-r from-kayfabe-gold to-kayfabe-red p-8 rounded-lg;
+  }
+
+  .main-event-card {
+    @apply border-2 border-kayfabe-gold bg-kayfabe-gold/10 p-6 rounded-lg;
+  }
+
+  .time-block-table {
+    @apply border border-kayfabe-gray-medium divide-y divide-kayfabe-gray-dark;
+  }
+
+  .match-card-header {
+    @apply border-b border-kayfabe-gray-medium pb-4 mb-6;
+  }
 }

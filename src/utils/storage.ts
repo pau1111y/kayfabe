@@ -42,13 +42,35 @@ export const getDefaultAppData = (): AppData => ({
     lastResetDate: new Date().toISOString().split('T')[0],
   },
   belts: DEFAULT_BELTS,
+  midcardConfig: {
+    timeBlocks: [],
+    dailyBudget: 24,
+    lastResetDate: new Date().toISOString().split('T')[0],
+  },
 });
+
+const migrateAppData = (data: any): AppData => {
+  const defaultData = getDefaultAppData();
+
+  // Add midcardConfig if missing
+  if (!data.midcardConfig) {
+    data.midcardConfig = defaultData.midcardConfig;
+  }
+
+  // Add updates array to theBigOne if missing
+  if (data.user?.theBigOne && !data.user.theBigOne.updates) {
+    data.user.theBigOne.updates = [];
+  }
+
+  return data as AppData;
+};
 
 export const loadAppData = (): AppData => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      return migrateAppData(parsed);
     }
   } catch (error) {
     console.error('Error loading app data:', error);

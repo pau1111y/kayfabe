@@ -3,6 +3,14 @@ export type Impact = 'pop' | 'heat';
 export type GoalTier = 'opening' | 'midcard' | 'runin' | 'main';
 export type GoalStatus = 'active' | 'completed' | 'archived';
 
+export interface BigOneUpdate {
+  id: string;
+  previousPercentage: number;
+  newPercentage: number;
+  promoId: string;
+  timestamp: number;
+}
+
 export interface UserProfile {
   id: string;
   ringName: string;
@@ -17,6 +25,7 @@ export interface UserProfile {
     description: string;
     percentage: number;
     createdAt: number;
+    updates: BigOneUpdate[];
   } | null;
   completedBigOnes: CompletedBigOne[];
   hasCompletedOnboarding: boolean;
@@ -89,6 +98,24 @@ export interface Belt {
   earnedAt: number | null;
 }
 
+export interface TimeBlock {
+  id: string;
+  name: string;
+  allocatedHours: number;
+  loggedHours: number;
+  isDaily: boolean;
+  isCompleted: boolean;
+  linkedGoalId: string | null;
+  timerStartedAt: number | null;
+  createdAt: number;
+}
+
+export interface MidcardConfig {
+  timeBlocks: TimeBlock[];
+  dailyBudget: number;
+  lastResetDate: string;
+}
+
 export interface AppData {
   user: UserProfile | null;
   promos: Promo[];
@@ -97,4 +124,5 @@ export interface AppData {
   runIns: RunIn[];
   openingContest: OpeningContest;
   belts: Belt[];
+  midcardConfig: MidcardConfig;
 }

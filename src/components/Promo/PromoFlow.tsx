@@ -11,16 +11,26 @@ import { generateId } from '../../utils/storage';
 
 type FlowStep = 'select' | 'prompt' | 'write' | 'storyline' | 'impact' | 'success' | 'followup';
 
+interface BigOneContext {
+  previousPercentage: number;
+  newPercentage: number;
+}
+
 interface PromoFlowProps {
   goals: Goal[];
   onComplete: (promo: Promo) => void;
   onCancel: () => void;
+  bigOneContext?: BigOneContext;
 }
 
-export const PromoFlow: React.FC<PromoFlowProps> = ({ goals, onComplete, onCancel }) => {
-  const [step, setStep] = useState<FlowStep>('select');
-  const [promoType, setPromoType] = useState<PromoType | null>(null);
-  const [currentPrompt, setCurrentPrompt] = useState<string | null>(null);
+export const PromoFlow: React.FC<PromoFlowProps> = ({ goals, onComplete, onCancel, bigOneContext }) => {
+  const [step, setStep] = useState<FlowStep>(bigOneContext ? 'write' : 'select');
+  const [promoType, setPromoType] = useState<PromoType | null>(bigOneContext ? 'face' : null);
+  const [currentPrompt, setCurrentPrompt] = useState<string | null>(
+    bigOneContext
+      ? `You just moved The Big One from ${bigOneContext.previousPercentage}% to ${bigOneContext.newPercentage}%. What changed? ${bigOneContext.newPercentage > bigOneContext.previousPercentage ? 'What progress did you make?' : 'What setback did you face?'}`
+      : null
+  );
   const [isFreestyle, setIsFreestyle] = useState(false);
   const [content, setContent] = useState('');
   const [storylineId, setStorylineId] = useState<string | null>(null);

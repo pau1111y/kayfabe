@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
-type AuthMode = 'signin' | 'signup';
+type AuthMode = 'signin' | 'signup' | 'reset';
 
 export const AuthScreen: React.FC = () => {
   const [mode, setMode] = useState<AuthMode>('signin');
@@ -9,21 +9,30 @@ export const AuthScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const { error } = mode === 'signin'
-      ? await signIn(email, password)
-      : await signUp(email, password);
+    if (mode === 'reset') {
+      const { error } = await resetPassword(email);
+      if (error) {
+        setError(error.message);
+      } else {
+        setError('Check your email for a password reset link!');
+      }
+    } else {
+      const { error } = mode === 'signin'
+        ? await signIn(email, password)
+        : await signUp(email, password);
 
-    if (error) {
-      setError(error.message);
-    } else if (mode === 'signup') {
-      setError('Check your email for a confirmation link!');
+      if (error) {
+        setError(error.message);
+      } else if (mode === 'signup') {
+        setError('Check your email for a confirmation link!');
+      }
     }
 
     setLoading(false);
@@ -36,7 +45,9 @@ export const AuthScreen: React.FC = () => {
         <div className="text-center">
           <h1 className="heading-1 mb-4">KAYFABE</h1>
           <p className="text-kayfabe-gray-light">
-            {mode === 'signin' ? 'Welcome back to the business' : 'Step into the business'}
+            {mode === 'signin' && 'Welcome back to the business'}
+            {mode === 'signup' && 'Step into the business'}
+            {mode === 'reset' && 'Reset your password'}
           </p>
         </div>
 
@@ -58,22 +69,24 @@ export const AuthScreen: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="text-kayfabe-gray-light text-sm block mb-2">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              required
-              disabled={loading}
-              minLength={6}
-            />
-          </div>
+          {mode !== 'reset' && (
+            <div>
+              <label htmlFor="password" className="text-kayfabe-gray-light text-sm block mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-field"
+                placeholder="••••••••"
+                required
+                disabled={loading}
+                minLength={6}
+              />
+            </div>
+          )}
 
           {error && (
             <div className={`text-sm p-3 border ${
@@ -90,23 +103,64 @@ export const AuthScreen: React.FC = () => {
             className="btn-primary w-full"
             disabled={loading}
           >
-            {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
+            {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Sign Up' : 'Send Reset Link'}
           </button>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === 'signin' ? 'signup' : 'signin');
-                setError(null);
-              }}
-              className="text-kayfabe-gray-light hover:text-kayfabe-cream text-sm"
-              disabled={loading}
-            >
-              {mode === 'signin'
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
-            </button>
+          <div className="text-center space-y-2">
+            {mode === 'signin' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('reset');
+                    setError(null);
+                  }}
+                  className="text-kayfabe-gray-light hover:text-kayfabe-cream text-sm block w-full"
+                  disabled={loading}
+                >
+                  Forgot password?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('signup');
+                    setError(null);
+                  }}
+                  className="text-kayfabe-gray-light hover:text-kayfabe-cream text-sm"
+                  disabled={loading}
+                >
+                  Don't have an account? Sign up
+                </button>
+              </>
+            )}
+
+            {mode === 'signup' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('signin');
+                  setError(null);
+                }}
+                className="text-kayfabe-gray-light hover:text-kayfabe-cream text-sm"
+                disabled={loading}
+              >
+                Already have an account? Sign in
+              </button>
+            )}
+
+            {mode === 'reset' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('signin');
+                  setError(null);
+                }}
+                className="text-kayfabe-gray-light hover:text-kayfabe-cream text-sm"
+                disabled={loading}
+              >
+                Back to sign in
+              </button>
+            )}
           </div>
         </form>
       </div>

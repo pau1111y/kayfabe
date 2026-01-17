@@ -92,6 +92,7 @@ export const supabaseService = {
             description: bigOne.description,
             percentage: bigOne.percentage,
             createdAt: new Date(bigOne.created_at).getTime(),
+            updates: [],
           } : null,
           completedBigOnes: [],
           hasCompletedOnboarding: true,
@@ -145,6 +146,11 @@ export const supabaseService = {
             enabled: h.enabled,
           })) : DEFAULT_HABITS,
           completedToday: (habitCompletions || []).map(hc => hc.habit_id),
+          lastResetDate: today,
+        },
+        midcardConfig: {
+          timeBlocks: [],
+          dailyBudget: 24,
           lastResetDate: today,
         },
       };
