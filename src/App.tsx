@@ -160,22 +160,37 @@ function App() {
   const handleOnboardingComplete = async (ringName: string, epithet: string, avatarId: string) => {
     if (!user) return;
 
-    // Update profile with ring name and epithet
-    await supabaseService.updateProfile({
-      ringName,
-      epithet,
-    });
+    try {
+      console.log('Starting onboarding completion...', { ringName, epithet, avatarId });
 
-    // Update selected avatar
-    await supabaseService.updateSelectedAvatar(avatarId);
+      // Update profile with ring name and epithet
+      await supabaseService.updateProfile({
+        ringName,
+        epithet,
+      });
+      console.log('Profile updated');
 
-    // Mark onboarding as completed
-    await supabaseService.completeOnboarding();
+      // Update selected avatar
+      await supabaseService.updateSelectedAvatar(avatarId);
+      console.log('Avatar updated');
 
-    // Reload data
-    const freshData = await supabaseService.loadUserData();
-    if (freshData) {
-      setAppData(freshData);
+      // Mark onboarding as completed
+      await supabaseService.completeOnboarding();
+      console.log('Onboarding marked complete');
+
+      // Reload data
+      const freshData = await supabaseService.loadUserData();
+      console.log('Fresh data loaded:', freshData);
+
+      if (freshData) {
+        setAppData(freshData);
+        console.log('AppData set successfully');
+      } else {
+        console.error('freshData is null!');
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      throw error;
     }
   };
 
