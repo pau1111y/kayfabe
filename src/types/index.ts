@@ -55,21 +55,18 @@ export interface Goal {
 
 export interface QuickTag {
   id: string;
-  type: PromoType;
-  storylineId: string | null;
+  note: string;
   createdAt: number;
-  expandedToPromoId: string | null;
+  dismissed: boolean;
 }
 
 export interface RunIn {
   id: string;
-  personName: string;
-  type: PromoType;
-  content: string;
-  storylineId: string | null;
-  followUpNeeded: boolean;
-  followUpCompleted: boolean;
-  createdAt: number;
+  name: string;
+  role: string;
+  notes: string;
+  firstEncounter: number;
+  lastUpdate: number;
 }
 
 export interface Habit {

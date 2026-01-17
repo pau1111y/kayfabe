@@ -10,8 +10,14 @@ import { TradingCard } from './components/Profile/TradingCard';
 import { StreakDisplay } from './components/Profile/StreakDisplay';
 import { BeltDisplay } from './components/Profile/BeltDisplay';
 import { AuthScreen } from './components/Auth/AuthScreen';
+import { HabitList } from './components/OpeningContest/HabitList';
+import { HabitSettings } from './components/OpeningContest/HabitSettings';
+import { QuickTagFlow } from './components/QuickTag/QuickTagFlow';
+import { TagList } from './components/QuickTag/TagList';
+import { RunInFlow } from './components/RunIn/RunInFlow';
+import { DarkMatchFlow } from './components/DarkMatch/DarkMatchFlow';
 import { useAuth } from './contexts/AuthContext';
-import type { AppData, Promo, Goal, GoalTier, GoalStatus } from './types';
+import type { AppData, Promo, Goal, GoalTier, GoalStatus, QuickTag, RunIn } from './types';
 import { generateId } from './utils/storage';
 import { checkAchievements } from './utils/achievements';
 import { supabaseService } from './services/supabaseService';
@@ -24,6 +30,10 @@ function App() {
   const [isWritingPromo, setIsWritingPromo] = useState(false);
   const [isAddingGoal, setIsAddingGoal] = useState(false);
   const [completingGoalId, setCompletingGoalId] = useState<string | null>(null);
+  const [showHabitSettings, setShowHabitSettings] = useState(false);
+  const [showQuickTag, setShowQuickTag] = useState(false);
+  const [showRunIn, setShowRunIn] = useState(false);
+  const [showDarkMatch, setShowDarkMatch] = useState(false);
 
   // Load user data from Supabase when user logs in
   useEffect(() => {
@@ -190,6 +200,139 @@ function App() {
     setAppData(updated);
   };
 
+  const handleToggleHabit = async (habitId: string) => {
+    if (!appData) return;
+
+    const isCompleted = appData.openingContest.completedToday.includes(habitId);
+    const enabledHabits = appData.openingContest.habits.filter(h => h.enabled);
+
+    let xpGain = 0;
+    let updatedCompletedToday: string[];
+
+    if (isCompleted) {
+      // Uncomplete
+      updatedCompletedToday = appData.openingContest.completedToday.filter(id => id !== habitId);
+    } else {
+      // Complete
+      updatedCompletedToday = [...appData.openingContest.completedToday, habitId];
+      xpGain = 10; // Base XP for completing a habit
+
+      // Check for clean sweep
+      const allCompleted = enabledHabits.every(h =>
+        updatedCompletedToday.includes(h.id)
+      );
+      if (allCompleted) {
+        xpGain += 15; // Bonus for clean sweep
+      }
+    }
+
+    // TODO: Save habit completion to Supabase
+    // For now, just update local state
+
+    const updated: AppData = {
+      ...appData,
+      openingContest: {
+        ...appData.openingContest,
+        completedToday: updatedCompletedToday,
+      },
+      user: appData.user ? {
+        ...appData.user,
+        xp: appData.user.xp + xpGain,
+      } : null,
+    };
+
+    if (updated.user && xpGain > 0) {
+      await supabaseService.updateProfile({ xp: updated.user.xp });
+    }
+
+    setAppData(updated);
+  };
+
+  const handleToggleHabitEnabled = (habitId: string) => {
+    if (!appData) return;
+
+    setAppData({
+      ...appData,
+      openingContest: {
+        ...appData.openingContest,
+        habits: appData.openingContest.habits.map(h =>
+          h.id === habitId ? { ...h, enabled: !h.enabled } : h
+        ),
+      },
+    });
+
+    // TODO: Save to Supabase
+  };
+
+  const handleAddCustomHabit = (name: string) => {
+    if (!appData) return;
+
+    const newHabit = {
+      id: generateId(),
+      name,
+      isHardcoded: false,
+      enabled: true,
+    };
+
+    setAppData({
+      ...appData,
+      openingContest: {
+        ...appData.openingContest,
+        habits: [...appData.openingContest.habits, newHabit],
+      },
+    });
+
+    // TODO: Save to Supabase
+  };
+
+  const handleQuickTagComplete = (tag: QuickTag) => {
+    if (!appData) return;
+
+    setAppData({
+      ...appData,
+      quickTags: [...appData.quickTags, tag],
+    });
+
+    setShowQuickTag(false);
+
+    // TODO: Save to Supabase
+  };
+
+  const handleExpandTag = (tagId: string) => {
+    const tag = appData?.quickTags.find(t => t.id === tagId);
+    if (!tag) return;
+
+    // Pre-fill promo with tag content
+    setIsWritingPromo(true);
+    // TODO: Pass tag content to PromoFlow
+  };
+
+  const handleDismissTag = (tagId: string) => {
+    if (!appData) return;
+
+    setAppData({
+      ...appData,
+      quickTags: appData.quickTags.map(t =>
+        t.id === tagId ? { ...t, dismissed: true } : t
+      ),
+    });
+
+    // TODO: Save to Supabase
+  };
+
+  const handleRunInComplete = (runIn: RunIn) => {
+    if (!appData) return;
+
+    setAppData({
+      ...appData,
+      runIns: [...appData.runIns, runIn],
+    });
+
+    setShowRunIn(false);
+
+    // TODO: Save to Supabase
+  };
+
   if (needsOnboarding) {
     return (
       <div className="min-h-screen bg-kayfabe-black flex items-center justify-center p-4">
@@ -283,6 +426,94 @@ function App() {
       default:
         return (
           <div className="space-y-6">
+            {/* Opening Contest - Daily Habits */}
+            {appData && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <h3 className="heading-2">Opening Contest</h3>
+                  <button
+                    onClick={() => setShowHabitSettings(!showHabitSettings)}
+                    className="text-kayfabe-gray-light hover:text-kayfabe-cream text-sm"
+                  >
+                    ⚙️
+                  </button>
+                </div>
+                {showHabitSettings ? (
+                  <HabitSettings
+                    habits={appData.openingContest.habits}
+                    onToggleEnabled={handleToggleHabitEnabled}
+                    onAddCustom={handleAddCustomHabit}
+                    onClose={() => setShowHabitSettings(false)}
+                  />
+                ) : (
+                  <HabitList
+                    habits={appData.openingContest.habits}
+                    completedToday={appData.openingContest.completedToday}
+                    onToggleHabit={handleToggleHabit}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setShowQuickTag(true)}
+                className="btn-secondary py-2 text-sm"
+              >
+                🏷️ Tag
+              </button>
+              <button
+                onClick={() => setShowRunIn(true)}
+                className="btn-secondary py-2 text-sm"
+              >
+                👤 Run-In
+              </button>
+              <button
+                onClick={() => setShowDarkMatch(true)}
+                className="btn-secondary py-2 text-sm"
+              >
+                🌑 Vent
+              </button>
+            </div>
+
+            {/* Quick Tag Flow */}
+            {showQuickTag && (
+              <QuickTagFlow
+                onComplete={handleQuickTagComplete}
+                onCancel={() => setShowQuickTag(false)}
+              />
+            )}
+
+            {/* Run-In Flow */}
+            {showRunIn && (
+              <RunInFlow
+                onComplete={handleRunInComplete}
+                onCancel={() => setShowRunIn(false)}
+              />
+            )}
+
+            {/* Dark Match Flow */}
+            {showDarkMatch && (
+              <DarkMatchFlow
+                onComplete={() => setShowDarkMatch(false)}
+                onCancel={() => setShowDarkMatch(false)}
+              />
+            )}
+
+            {/* Pending Quick Tags */}
+            {appData && appData.quickTags.filter(t => !t.dismissed).length > 0 && (
+              <div className="space-y-2">
+                <h3 className="heading-2">Tagged Moments</h3>
+                <TagList
+                  tags={appData.quickTags}
+                  onExpand={handleExpandTag}
+                  onDismiss={handleDismissTag}
+                />
+              </div>
+            )}
+
+            {/* The Big One */}
             {appData?.user && (
               <TheBigOne
                 bigOne={appData.user.theBigOne}
@@ -291,6 +522,7 @@ function App() {
               />
             )}
 
+            {/* Storylines */}
             <div className="flex justify-between items-center">
               <h3 className="heading-2">Storylines</h3>
               <button
@@ -320,6 +552,7 @@ function App() {
               />
             )}
 
+            {/* Recent Promos */}
             {appData && appData.promos.length > 0 && (
               <>
                 <h3 className="heading-2 mt-8">Recent Promos</h3>
