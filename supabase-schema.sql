@@ -85,6 +85,26 @@ CREATE TABLE IF NOT EXISTS public.habit_completions (
   UNIQUE(user_id, habit_id, completed_date)
 );
 
+-- Create quick_tags table
+CREATE TABLE IF NOT EXISTS public.quick_tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  note TEXT NOT NULL,
+  dismissed BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Create run_ins table
+CREATE TABLE IF NOT EXISTS public.run_ins (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT '',
+  notes TEXT NOT NULL DEFAULT '',
+  first_encounter TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 -- Enable Row Level Security
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.the_big_one ENABLE ROW LEVEL SECURITY;
@@ -93,6 +113,8 @@ ALTER TABLE public.promos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.belts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.habits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.habit_completions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.quick_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.run_ins ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for profiles
 CREATE POLICY "Users can view own profile"
@@ -235,3 +257,37 @@ DROP TRIGGER IF EXISTS on_profile_updated ON public.profiles;
 CREATE TRIGGER on_profile_updated
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- Create policies for quick_tags
+CREATE POLICY "Users can view own quick tags"
+  ON public.quick_tags FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own quick tags"
+  ON public.quick_tags FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own quick tags"
+  ON public.quick_tags FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own quick tags"
+  ON public.quick_tags FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Create policies for run_ins
+CREATE POLICY "Users can view own run-ins"
+  ON public.run_ins FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own run-ins"
+  ON public.run_ins FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own run-ins"
+  ON public.run_ins FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own run-ins"
+  ON public.run_ins FOR DELETE
+  USING (auth.uid() = user_id);

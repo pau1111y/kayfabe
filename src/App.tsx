@@ -20,6 +20,7 @@ import { useAuth } from './contexts/AuthContext';
 import type { AppData, Promo, Goal, GoalTier, GoalStatus, QuickTag, RunIn } from './types';
 import { generateId } from './utils/storage';
 import { checkAchievements } from './utils/achievements';
+import { calculateXPWithMultiplier } from './utils/xp';
 import { supabaseService } from './services/supabaseService';
 
 function App() {
@@ -81,7 +82,13 @@ function App() {
   const needsOnboarding = !appData?.user?.hasCompletedOnboarding;
 
   const handlePromoComplete = async (promo: Promo) => {
-    if (!appData) return;
+    if (!appData || !appData.user) return;
+
+    // Apply streak multiplier to XP
+    const multipliedXP = calculateXPWithMultiplier(
+      promo.xpEarned,
+      appData.user.currentStreak
+    );
 
     // Save promo to Supabase
     await supabaseService.savePromo(promo);
@@ -90,10 +97,10 @@ function App() {
     const updated: AppData = {
       ...appData,
       promos: [...appData.promos, promo],
-      user: appData.user ? {
+      user: {
         ...appData.user,
-        xp: appData.user.xp + promo.xpEarned,
-      } : null,
+        xp: appData.user.xp + multipliedXP,
+      },
     };
     updated.belts = checkAchievements(updated);
 
@@ -133,7 +140,7 @@ function App() {
   };
 
   const handleCompleteGoal = async (goalId: string, victoryPromo: string) => {
-    if (!appData) return;
+    if (!appData || !appData.user) return;
 
     // Update goal in Supabase
     await supabaseService.updateGoal(goalId, {
@@ -141,6 +148,9 @@ function App() {
       completedAt: Date.now(),
       victoryPromo,
     });
+
+    // Apply streak multiplier to bonus XP
+    const bonusXP = calculateXPWithMultiplier(50, appData.user.currentStreak);
 
     // Update local state
     const updated: AppData = {
@@ -150,10 +160,10 @@ function App() {
           ? { ...g, status: 'completed' as GoalStatus, completedAt: Date.now(), victoryPromo }
           : g
       ),
-      user: appData.user ? {
+      user: {
         ...appData.user,
-        xp: appData.user.xp + 50, // Bonus XP for completing goal
-      } : null,
+        xp: appData.user.xp + bonusXP,
+      },
     };
     updated.belts = checkAchievements(updated);
 
@@ -176,6 +186,10 @@ function App() {
     // Update in Supabase
     await supabaseService.updateBigOne(description, percentage);
 
+    // Apply streak multiplier to Big One XP
+    const baseXP = increase * 25; // 25 XP per percentage point increase
+    const xpGain = calculateXPWithMultiplier(baseXP, appData.user.currentStreak);
+
     // Update local state
     const updated: AppData = {
       ...appData,
@@ -186,7 +200,7 @@ function App() {
           percentage,
           createdAt: appData.user.theBigOne?.createdAt || Date.now(),
         },
-        xp: appData.user.xp + (increase * 25), // 25 XP per percentage point increase
+        xp: appData.user.xp + xpGain,
       },
     };
     updated.belts = checkAchievements(updated);
@@ -194,40 +208,44 @@ function App() {
     // Save updated XP and belts to Supabase
     if (updated.user) {
       await supabaseService.updateProfile({ xp: updated.user.xp });
+      await supabaseService.saveBelts(updated.belts);
     }
-    await supabaseService.saveBelts(updated.belts);
 
     setAppData(updated);
   };
 
   const handleToggleHabit = async (habitId: string) => {
-    if (!appData) return;
+    if (!appData || !appData.user) return;
 
     const isCompleted = appData.openingContest.completedToday.includes(habitId);
     const enabledHabits = appData.openingContest.habits.filter(h => h.enabled);
+    const today = new Date().toISOString().split('T')[0];
 
-    let xpGain = 0;
+    let baseXP = 0;
     let updatedCompletedToday: string[];
 
     if (isCompleted) {
       // Uncomplete
       updatedCompletedToday = appData.openingContest.completedToday.filter(id => id !== habitId);
+      await supabaseService.deleteHabitCompletion(habitId, today);
     } else {
       // Complete
       updatedCompletedToday = [...appData.openingContest.completedToday, habitId];
-      xpGain = 10; // Base XP for completing a habit
+      baseXP = 10; // Base XP for completing a habit
 
       // Check for clean sweep
       const allCompleted = enabledHabits.every(h =>
         updatedCompletedToday.includes(h.id)
       );
       if (allCompleted) {
-        xpGain += 15; // Bonus for clean sweep
+        baseXP += 15; // Bonus for clean sweep
       }
+
+      await supabaseService.saveHabitCompletion(habitId, today);
     }
 
-    // TODO: Save habit completion to Supabase
-    // For now, just update local state
+    // Apply streak multiplier
+    const xpGain = calculateXPWithMultiplier(baseXP, appData.user.currentStreak);
 
     const updated: AppData = {
       ...appData,
@@ -235,36 +253,41 @@ function App() {
         ...appData.openingContest,
         completedToday: updatedCompletedToday,
       },
-      user: appData.user ? {
+      user: {
         ...appData.user,
         xp: appData.user.xp + xpGain,
-      } : null,
+      },
     };
 
-    if (updated.user && xpGain > 0) {
+    if (xpGain > 0 && updated.user) {
       await supabaseService.updateProfile({ xp: updated.user.xp });
     }
 
     setAppData(updated);
   };
 
-  const handleToggleHabitEnabled = (habitId: string) => {
+  const handleToggleHabitEnabled = async (habitId: string) => {
     if (!appData) return;
+
+    const habit = appData.openingContest.habits.find(h => h.id === habitId);
+    if (!habit) return;
+
+    const newEnabled = !habit.enabled;
 
     setAppData({
       ...appData,
       openingContest: {
         ...appData.openingContest,
         habits: appData.openingContest.habits.map(h =>
-          h.id === habitId ? { ...h, enabled: !h.enabled } : h
+          h.id === habitId ? { ...h, enabled: newEnabled } : h
         ),
       },
     });
 
-    // TODO: Save to Supabase
+    await supabaseService.updateHabit(habitId, { enabled: newEnabled });
   };
 
-  const handleAddCustomHabit = (name: string) => {
+  const handleAddCustomHabit = async (name: string) => {
     if (!appData) return;
 
     const newHabit = {
@@ -282,10 +305,10 @@ function App() {
       },
     });
 
-    // TODO: Save to Supabase
+    await supabaseService.saveHabit(newHabit);
   };
 
-  const handleQuickTagComplete = (tag: QuickTag) => {
+  const handleQuickTagComplete = async (tag: QuickTag) => {
     if (!appData) return;
 
     setAppData({
@@ -295,7 +318,7 @@ function App() {
 
     setShowQuickTag(false);
 
-    // TODO: Save to Supabase
+    await supabaseService.saveQuickTag(tag);
   };
 
   const handleExpandTag = (tagId: string) => {
@@ -304,10 +327,10 @@ function App() {
 
     // Pre-fill promo with tag content
     setIsWritingPromo(true);
-    // TODO: Pass tag content to PromoFlow
+    // TODO: Pass tag content to PromoFlow (future enhancement)
   };
 
-  const handleDismissTag = (tagId: string) => {
+  const handleDismissTag = async (tagId: string) => {
     if (!appData) return;
 
     setAppData({
@@ -317,10 +340,10 @@ function App() {
       ),
     });
 
-    // TODO: Save to Supabase
+    await supabaseService.updateQuickTag(tagId, { dismissed: true });
   };
 
-  const handleRunInComplete = (runIn: RunIn) => {
+  const handleRunInComplete = async (runIn: RunIn) => {
     if (!appData) return;
 
     setAppData({
@@ -330,7 +353,7 @@ function App() {
 
     setShowRunIn(false);
 
-    // TODO: Save to Supabase
+    await supabaseService.saveRunIn(runIn);
   };
 
   if (needsOnboarding) {

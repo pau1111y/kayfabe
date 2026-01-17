@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { AppData, Promo, Goal, Belt } from '../types';
+import type { AppData, Promo, Goal, Belt, QuickTag, RunIn, Habit } from '../types';
 import { DEFAULT_BELTS, DEFAULT_HABITS } from '../utils/storage';
 
 export const supabaseService = {
@@ -9,7 +9,10 @@ export const supabaseService = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // Load profile
+      // Check and update streak on each load
+      await this.checkAndUpdateStreak();
+
+      // Load profile (will have updated streak values)
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -59,6 +62,20 @@ export const supabaseService = {
         .eq('user_id', user.id)
         .eq('completed_date', today);
 
+      // Load quick tags
+      const { data: quickTags } = await supabase
+        .from('quick_tags')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      // Load run-ins
+      const { data: runIns } = await supabase
+        .from('run_ins')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('last_update', { ascending: false });
+
       // Transform to AppData format
       const appData: AppData = {
         user: {
@@ -106,8 +123,20 @@ export const supabaseService = {
           requirement: b.requirement,
           earnedAt: b.earned_at ? new Date(b.earned_at).getTime() : null,
         })),
-        quickTags: [],
-        runIns: [],
+        quickTags: (quickTags || []).map(qt => ({
+          id: qt.id,
+          note: qt.note,
+          createdAt: new Date(qt.created_at).getTime(),
+          dismissed: qt.dismissed,
+        })),
+        runIns: (runIns || []).map(ri => ({
+          id: ri.id,
+          name: ri.name,
+          role: ri.role,
+          notes: ri.notes,
+          firstEncounter: new Date(ri.first_encounter).getTime(),
+          lastUpdate: new Date(ri.last_update).getTime(),
+        })),
         openingContest: {
           habits: habits && habits.length > 0 ? habits.map(h => ({
             id: h.habit_id,
@@ -274,5 +303,181 @@ export const supabaseService = {
     }));
 
     await supabase.from('belts').insert(beltRecords);
+  },
+
+  // Quick Tags
+  async saveQuickTag(tag: QuickTag): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    await supabase.from('quick_tags').insert({
+      id: tag.id,
+      user_id: user.id,
+      note: tag.note,
+      dismissed: tag.dismissed,
+      created_at: new Date(tag.createdAt).toISOString(),
+    });
+  },
+
+  async updateQuickTag(tagId: string, updates: Partial<QuickTag>): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const dbUpdates: Record<string, unknown> = {};
+    if (updates.dismissed !== undefined) dbUpdates.dismissed = updates.dismissed;
+    if (updates.note !== undefined) dbUpdates.note = updates.note;
+
+    await supabase
+      .from('quick_tags')
+      .update(dbUpdates)
+      .eq('id', tagId)
+      .eq('user_id', user.id);
+  },
+
+  // Run-Ins
+  async saveRunIn(runIn: RunIn): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    await supabase.from('run_ins').insert({
+      id: runIn.id,
+      user_id: user.id,
+      name: runIn.name,
+      role: runIn.role,
+      notes: runIn.notes,
+      first_encounter: new Date(runIn.firstEncounter).toISOString(),
+      last_update: new Date(runIn.lastUpdate).toISOString(),
+    });
+  },
+
+  async updateRunIn(runInId: string, updates: Partial<RunIn>): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const dbUpdates: Record<string, unknown> = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.role !== undefined) dbUpdates.role = updates.role;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.lastUpdate !== undefined) {
+      dbUpdates.last_update = new Date(updates.lastUpdate).toISOString();
+    }
+
+    await supabase
+      .from('run_ins')
+      .update(dbUpdates)
+      .eq('id', runInId)
+      .eq('user_id', user.id);
+  },
+
+  // Habits
+  async saveHabit(habit: Habit): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    await supabase.from('habits').insert({
+      user_id: user.id,
+      habit_id: habit.id,
+      name: habit.name,
+      is_hardcoded: habit.isHardcoded,
+      enabled: habit.enabled,
+    });
+  },
+
+  async updateHabit(habitId: string, updates: Partial<Habit>): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const dbUpdates: Record<string, unknown> = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.enabled !== undefined) dbUpdates.enabled = updates.enabled;
+
+    await supabase
+      .from('habits')
+      .update(dbUpdates)
+      .eq('habit_id', habitId)
+      .eq('user_id', user.id);
+  },
+
+  async saveHabitCompletion(habitId: string, date: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    await supabase.from('habit_completions').insert({
+      user_id: user.id,
+      habit_id: habitId,
+      completed_date: date,
+    });
+  },
+
+  async deleteHabitCompletion(habitId: string, date: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    await supabase
+      .from('habit_completions')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('habit_id', habitId)
+      .eq('completed_date', date);
+  },
+
+  // Streak Automation
+  async checkAndUpdateStreak(): Promise<{ currentStreak: number; longestStreak: number }> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Get current profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('current_streak, longest_streak, last_active_date')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile) throw new Error('Profile not found');
+
+    const today = new Date().toISOString().split('T')[0];
+    const lastActiveDate = profile.last_active_date;
+
+    // If already active today, no change needed
+    if (lastActiveDate === today) {
+      return {
+        currentStreak: profile.current_streak,
+        longestStreak: profile.longest_streak,
+      };
+    }
+
+    // Calculate days since last activity
+    const lastDate = new Date(lastActiveDate);
+    const currentDate = new Date(today);
+    const diffTime = currentDate.getTime() - lastDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    let newStreak = profile.current_streak;
+
+    if (diffDays === 1) {
+      // Consecutive day - increment streak
+      newStreak = profile.current_streak + 1;
+    } else if (diffDays > 1) {
+      // Missed days - reset streak
+      newStreak = 1;
+    }
+
+    // Update longest streak if necessary
+    const newLongestStreak = Math.max(newStreak, profile.longest_streak);
+
+    // Update profile
+    await supabase
+      .from('profiles')
+      .update({
+        current_streak: newStreak,
+        longest_streak: newLongestStreak,
+        last_active_date: today,
+      })
+      .eq('id', user.id);
+
+    return {
+      currentStreak: newStreak,
+      longestStreak: newLongestStreak,
+    };
   },
 };
