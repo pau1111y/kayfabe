@@ -61,62 +61,110 @@ export const BigOneHeadline: React.FC<BigOneHeadlineProps> = ({
 
   const currentPercentage = tempPercentage !== null ? tempPercentage : bigOne.percentage;
 
+  // Calculate milestone markers
+  const milestones = [25, 50, 75, 100];
+  const reachedMilestones = milestones.filter(m => currentPercentage >= m).length;
+
   return (
-    <div className="space-y-2">
-      <h3 className="text-center text-kayfabe-gold uppercase tracking-wider text-sm font-bold">
-        🏆 The Big One - Headline Match
-      </h3>
+    <div className="space-y-4">
+      {/* The Big One Banner - Larger, More Dominant */}
+      <div className="big-one-banner relative overflow-hidden">
+        {/* Championship Plates Background Effect */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="grid grid-cols-4 h-full">
+            {milestones.map((milestone) => (
+              <div
+                key={milestone}
+                className={`border-r border-kayfabe-cream/20 ${
+                  currentPercentage >= milestone ? 'bg-kayfabe-cream/10' : ''
+                }`}
+              />
+            ))}
+          </div>
+        </div>
 
-      <div className="big-one-banner">
-        <p className="text-kayfabe-cream text-xl md:text-2xl text-center font-bold mb-4">
-          "{bigOne.description}"
-        </p>
+        {/* Content */}
+        <div className="relative z-10">
+          <p className="text-kayfabe-cream text-2xl md:text-3xl text-center font-bold mb-6 leading-tight">
+            "{bigOne.description}"
+          </p>
 
-        <div className="space-y-2">
-          <div className="h-4 bg-kayfabe-black/30 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-kayfabe-cream transition-all duration-300"
-              style={{ width: `${currentPercentage}%` }}
+          {/* Progress Bar with Milestones */}
+          <div className="space-y-3">
+            <div className="relative h-6 bg-kayfabe-black/40 rounded-full overflow-hidden border border-kayfabe-cream/20">
+              {/* Progress Fill */}
+              <div
+                className="h-full bg-gradient-to-r from-kayfabe-cream via-kayfabe-gold to-kayfabe-cream transition-all duration-500"
+                style={{ width: `${currentPercentage}%` }}
+              />
+
+              {/* Milestone Markers */}
+              {milestones.slice(0, 3).map((milestone) => (
+                <div
+                  key={milestone}
+                  className="absolute top-0 h-full w-px bg-kayfabe-black/60"
+                  style={{ left: `${milestone}%` }}
+                />
+              ))}
+            </div>
+
+            {/* Milestone Labels */}
+            <div className="flex justify-between text-xs text-kayfabe-cream/60">
+              {milestones.map((milestone) => (
+                <span
+                  key={milestone}
+                  className={currentPercentage >= milestone ? 'text-kayfabe-gold font-bold' : ''}
+                >
+                  {milestone === 100 ? '🏆' : `${milestone}%`}
+                </span>
+              ))}
+            </div>
+
+            {/* Current Progress Display */}
+            <div className="text-center">
+              <span className="text-kayfabe-cream font-bold text-3xl">
+                {currentPercentage}%
+              </span>
+              <p className="text-kayfabe-cream/60 text-sm mt-1">
+                {reachedMilestones}/4 milestones reached
+              </p>
+            </div>
+
+            {/* Slider */}
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={currentPercentage}
+              onChange={(e) => handleSliderChange(Number(e.target.value))}
+              onPointerUp={handleSliderRelease}
+              onMouseUp={handleSliderRelease}
+              className="w-full accent-kayfabe-gold mt-3 cursor-pointer"
+              style={{ height: '8px' }}
             />
+
+            {!showConfirmation && (
+              <p className="text-kayfabe-cream/50 text-xs text-center italic">
+                Adjust progress, then confirm to document your journey
+              </p>
+            )}
           </div>
-
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-kayfabe-cream/80">Progress</span>
-            <span className="text-kayfabe-cream font-bold text-lg">
-              {currentPercentage}%
-            </span>
-          </div>
-
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={currentPercentage}
-            onChange={(e) => handleSliderChange(Number(e.target.value))}
-            onPointerUp={handleSliderRelease}
-            onMouseUp={handleSliderRelease}
-            className="w-full accent-kayfabe-cream mt-2"
-          />
-
-          {!showConfirmation && (
-            <p className="text-kayfabe-cream/60 text-xs text-center italic">
-              Adjust freely, then confirm to write promo
-            </p>
-          )}
         </div>
       </div>
 
+      {/* Confirmation Dialog */}
       {showConfirmation && (
-        <div className="mt-4 card border-kayfabe-gold">
-          <p className="text-kayfabe-cream text-sm mb-3">
-            Confirm change from {bigOne.percentage}% to {pendingPercentage}%?
+        <div className="card border-2 border-kayfabe-gold bg-kayfabe-gold/5">
+          <p className="text-kayfabe-cream text-sm mb-3 text-center">
+            Update progress from <span className="font-bold">{bigOne.percentage}%</span> to{' '}
+            <span className="font-bold text-kayfabe-gold">{pendingPercentage}%</span>?
           </p>
           <div className="flex space-x-3">
             <button onClick={handleCancelChange} className="btn-secondary flex-1">
               Cancel
             </button>
             <button onClick={handleConfirmChange} className="btn-primary flex-1">
-              Confirm & Write Promo
+              ✍️ Document the Journey
             </button>
           </div>
         </div>

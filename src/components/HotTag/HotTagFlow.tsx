@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import type { QuickTag } from '../../types';
+import type { HotTag } from '../../types';
 
-interface QuickTagFlowProps {
-  onComplete: (tag: QuickTag) => void;
+interface HotTagFlowProps {
+  onComplete: (tag: HotTag) => void;
   onCancel: () => void;
 }
 
-export const QuickTagFlow: React.FC<QuickTagFlowProps> = ({ onComplete, onCancel }) => {
+export const HotTagFlow: React.FC<HotTagFlowProps> = ({ onComplete, onCancel }) => {
   const [note, setNote] = useState('');
 
   const handleSubmit = () => {
     if (!note.trim()) return;
 
-    const tag: QuickTag = {
+    const tag: HotTag = {
       id: crypto.randomUUID(),
       note: note.trim(),
       createdAt: Date.now(),
@@ -25,27 +25,27 @@ export const QuickTagFlow: React.FC<QuickTagFlowProps> = ({ onComplete, onCancel
   return (
     <div className="card space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="heading-2">Quick Tag</h3>
+        <h3 className="heading-2">🔥 Hot Tag</h3>
         <button onClick={onCancel} className="text-kayfabe-gray-light hover:text-kayfabe-cream">
           ✕
         </button>
       </div>
 
       <p className="text-kayfabe-gray-light text-sm">
-        Tag something worth expanding on later. Keep it brief.
+        Tag yourself in. Make the save later.
       </p>
 
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Something interesting just happened..."
+        placeholder="What just happened? Your future self will make the save..."
         className="input-field min-h-24"
         autoFocus
       />
 
       <div className="flex space-x-2">
         <button onClick={handleSubmit} className="btn-primary flex-1">
-          Tag It
+          🔥 Hot Tag!
         </button>
         <button onClick={onCancel} className="btn-secondary">
           Cancel

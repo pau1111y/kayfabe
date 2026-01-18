@@ -16,11 +16,14 @@ import { TimeBlockSettings } from './components/Midcard/TimeBlockSettings';
 import { MatchCardHeader } from './components/MatchCard/MatchCardHeader';
 import { BigOneHeadline } from './components/MatchCard/BigOneHeadline';
 import { MainEventSection } from './components/MatchCard/MainEventSection';
-import { QuickTagFlow } from './components/QuickTag/QuickTagFlow';
+import { HotTagFlow } from './components/HotTag/HotTagFlow';
 import { RunInFlow } from './components/RunIn/RunInFlow';
 import { DarkMatchFlow } from './components/DarkMatch/DarkMatchFlow';
+import { XPProgressBar } from './components/Shared/XPProgressBar';
+import { TheBigOnePage } from './components/TheBigOne/TheBigOnePage';
+import { MainEventGoalPage } from './components/Goals/MainEventGoalPage';
 import { useAuth } from './contexts/AuthContext';
-import type { AppData, Promo, Goal, GoalTier, GoalStatus, QuickTag, RunIn, TimeBlock, BigOneUpdate } from './types';
+import type { AppData, Promo, Goal, GoalTier, GoalStatus, HotTag, RunIn, TimeBlock, BigOneUpdate } from './types';
 import { generateId } from './utils/storage';
 import { checkAchievements, checkAvatarUnlocks } from './utils/achievements';
 import { calculateXPWithMultiplier } from './utils/xp';
@@ -38,10 +41,12 @@ function App() {
   const [bigOnePromoContext, setBigOnePromoContext] = useState<{previousPercentage: number; newPercentage: number} | null>(null);
   const [isAddingGoal, setIsAddingGoal] = useState(false);
   const [completingGoalId, setCompletingGoalId] = useState<string | null>(null);
-  const [showQuickTag, setShowQuickTag] = useState(false);
+  const [showHotTag, setShowHotTag] = useState(false);
   const [showRunIn, setShowRunIn] = useState(false);
   const [showDarkMatch, setShowDarkMatch] = useState(false);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [viewingBigOne, setViewingBigOne] = useState(false);
+  const [viewingMainEventGoalId, setViewingMainEventGoalId] = useState<string | null>(null);
 
   // Load user data from Supabase when user logs in
   useEffect(() => {
@@ -157,11 +162,11 @@ function App() {
   const needsOnboarding = !appData?.user?.hasCompletedOnboarding;
 
   // Onboarding handlers
-  const handleOnboardingComplete = async (ringName: string, epithet: string, avatarId: string) => {
+  const handleOnboardingComplete = async (ringName: string, epithet: string, avatarId: string, bigOneDescription?: string) => {
     if (!user) return;
 
     try {
-      console.log('Starting onboarding completion...', { ringName, epithet, avatarId });
+      console.log('Starting onboarding completion...', { ringName, epithet, avatarId, bigOneDescription });
 
       // Update profile with ring name and epithet
       await supabaseService.updateProfile({
@@ -173,6 +178,12 @@ function App() {
       // Update selected avatar
       await supabaseService.updateSelectedAvatar(avatarId);
       console.log('Avatar updated');
+
+      // Set The Big One if provided
+      if (bigOneDescription) {
+        await supabaseService.updateBigOne(bigOneDescription, 0);
+        console.log('Big One set');
+      }
 
       // Mark onboarding as completed
       await supabaseService.completeOnboarding();
@@ -607,17 +618,17 @@ function App() {
     handleUpdateTimeBlock(blockId, { isCompleted: !block.isCompleted });
   };
 
-  const handleQuickTagComplete = async (tag: QuickTag) => {
+  const handleHotTagComplete = async (tag: HotTag) => {
     if (!appData) return;
 
     setAppData({
       ...appData,
-      quickTags: [...appData.quickTags, tag],
+      hotTags: [...appData.hotTags, tag],
     });
 
-    setShowQuickTag(false);
+    setShowHotTag(false);
 
-    await supabaseService.saveQuickTag(tag);
+    await supabaseService.saveHotTag(tag);
   };
 
 
@@ -780,12 +791,12 @@ function App() {
           );
         }
 
-        if (showQuickTag) {
+        if (showHotTag) {
           return (
             <div className="space-y-6">
-              <QuickTagFlow
-                onComplete={handleQuickTagComplete}
-                onCancel={() => setShowQuickTag(false)}
+              <HotTagFlow
+                onComplete={handleHotTagComplete}
+                onCancel={() => setShowHotTag(false)}
               />
             </div>
           );
@@ -813,44 +824,177 @@ function App() {
           );
         }
 
+        // Show The Big One detail page
+        if (viewingBigOne && appData?.user && appData.user.theBigOne) {
+          return (
+            <TheBigOnePage
+              bigOne={appData.user.theBigOne}
+              promos={appData.promos}
+              hotTags={appData.hotTags}
+              runIns={appData.runIns}
+              onUpdateProgress={async (newPercentage: number) => {
+                if (!appData.user || !appData.user.theBigOne) return;
+
+                await supabaseService.updateBigOne(appData.user.theBigOne.description, newPercentage);
+
+                const updated: AppData = {
+                  ...appData,
+                  user: appData.user ? {
+                    ...appData.user,
+                    theBigOne: {
+                      ...appData.user.theBigOne!,
+                      percentage: newPercentage,
+                    },
+                  } : null,
+                };
+
+                setAppData(updated);
+              }}
+              onBack={() => setViewingBigOne(false)}
+            />
+          );
+        }
+
+        // Show Main Event goal detail page
+        if (viewingMainEventGoalId && appData) {
+          const goal = appData.goals.find(g => g.id === viewingMainEventGoalId);
+          if (goal) {
+            return (
+              <MainEventGoalPage
+                goal={goal}
+                promos={appData.promos}
+                hotTags={appData.hotTags}
+                runIns={appData.runIns}
+                onComplete={async (victoryPromo: string) => {
+                  if (!appData.user) return;
+
+                  await supabaseService.updateGoal(goal.id, {
+                    status: 'completed',
+                    completedAt: Date.now(),
+                    victoryPromo,
+                  });
+
+                  const baseXP = 100;
+                  const multipliedXP = calculateXPWithMultiplier(baseXP, appData.user.currentStreak);
+
+                  await supabaseService.updateProfile({
+                    xp: appData.user.xp + multipliedXP,
+                  });
+
+                  const completedGoal: Goal = {
+                    ...goal,
+                    status: 'completed',
+                    completedAt: Date.now(),
+                    victoryPromo,
+                  };
+
+                  const updated: AppData = {
+                    ...appData,
+                    goals: appData.goals.map(g => g.id === goal.id ? completedGoal : g),
+                    user: appData.user ? {
+                      ...appData.user,
+                      xp: appData.user.xp + multipliedXP,
+                    } : null,
+                  };
+
+                  // Check achievements
+                  checkAchievements(updated);
+
+                  setAppData(updated);
+                  setViewingMainEventGoalId(null);
+                }}
+                onBack={() => setViewingMainEventGoalId(null)}
+              />
+            );
+          }
+        }
+
         // Match Card main view
         return (
-          <div className="space-y-6">
-            {/* Match Card Header */}
+          <div className="space-y-8">
+            {/* Match Card Header - Date & Streak */}
             {appData?.user && (
               <MatchCardHeader currentStreak={appData.user.currentStreak} />
             )}
 
-            {/* The Big One - Headline */}
+            {/* === THE BIG ONE - Hall of Fame Career Goal === */}
             {appData?.user && (
-              <BigOneHeadline
-                bigOne={appData.user.theBigOne}
-                onRequestPromoForChange={handleRequestBigOnePromo}
-              />
+              <div className="space-y-3">
+                <div className="text-center">
+                  <h2 className="text-kayfabe-gold text-xs uppercase tracking-widest font-bold mb-1">
+                    Hall of Fame Career
+                  </h2>
+                  <p className="text-kayfabe-gray-light text-xs italic">
+                    The legendary story. The Big One.
+                  </p>
+                </div>
+                <div onClick={() => setViewingBigOne(true)} className="cursor-pointer">
+                  <BigOneHeadline
+                    bigOne={appData.user.theBigOne}
+                    onRequestPromoForChange={handleRequestBigOnePromo}
+                  />
+                </div>
+              </div>
             )}
 
-            {/* Main Event Section */}
-            <MainEventSection
-              goals={appData!.goals}
-              promos={appData!.promos}
-              onCompleteGoal={(id) => setCompletingGoalId(id)}
-            />
+            {/* Visual Separator */}
+            <div className="border-t border-kayfabe-gray-dark"></div>
 
-            {/* Midcard - Time Slots */}
+            {/* === MAIN EVENT - Championship Goals === */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <h2 className="text-kayfabe-gold text-sm uppercase tracking-wider font-bold">
+                  ⭐ Main Event
+                </h2>
+                <p className="text-kayfabe-gray-medium text-xs">
+                  The lofty goals worth savoring
+                </p>
+              </div>
+              <MainEventSection
+                goals={appData!.goals}
+                promos={appData!.promos}
+                onViewGoal={(id) => setViewingMainEventGoalId(id)}
+              />
+            </div>
+
+            {/* Visual Separator */}
+            <div className="border-t border-kayfabe-gray-dark"></div>
+
+            {/* === MIDCARD - Time Management === */}
             {appData && appData.midcardConfig.timeBlocks.length > 0 && (
-              <TimeBlockList
-                timeBlocks={appData.midcardConfig.timeBlocks}
-                dailyBudget={appData.midcardConfig.dailyBudget}
-                onToggleComplete={handleToggleTimeBlockComplete}
-              />
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-kayfabe-cream text-sm uppercase tracking-wider font-bold">
+                    ⏰ Midcard
+                  </h2>
+                  <p className="text-kayfabe-gray-medium text-xs">
+                    Make the most of your ring time
+                  </p>
+                </div>
+                <TimeBlockList
+                  timeBlocks={appData.midcardConfig.timeBlocks}
+                  dailyBudget={appData.midcardConfig.dailyBudget}
+                  onToggleComplete={handleToggleTimeBlockComplete}
+                />
+              </div>
             )}
 
-            {/* Opening Contest - Daily Habits */}
+            {/* Visual Separator */}
+            {appData && appData.midcardConfig.timeBlocks.length > 0 && (
+              <div className="border-t border-kayfabe-gray-dark"></div>
+            )}
+
+            {/* === OPENING CONTEST - Daily Habits === */}
             {appData && (
-              <div className="space-y-2">
-                <h3 className="text-xl font-display uppercase tracking-wider text-kayfabe-cream">
-                  🏋️ Opening Contest - Daily Habits
-                </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-kayfabe-cream text-sm uppercase tracking-wider font-bold">
+                    🏋️ Opening Contest
+                  </h2>
+                  <p className="text-kayfabe-gray-medium text-xs">
+                    Set the energy for the show
+                  </p>
+                </div>
                 <HabitList
                   habits={appData.openingContest.habits}
                   completedToday={appData.openingContest.completedToday}
@@ -865,10 +1009,10 @@ function App() {
             {/* Quick Actions - Keep for convenience */}
             <div className="grid grid-cols-3 gap-2 pt-4">
               <button
-                onClick={() => setShowQuickTag(true)}
+                onClick={() => setShowHotTag(true)}
                 className="btn-secondary py-2 text-sm"
               >
-                🏷️ Tag
+                🔥 Hot Tag
               </button>
               <button
                 onClick={() => setShowRunIn(true)}
@@ -900,6 +1044,15 @@ function App() {
 
   return (
     <div className="min-h-screen bg-kayfabe-black flex flex-col">
+      {/* XP Progress Bar - Always visible at top */}
+      {appData?.user && (
+        <XPProgressBar
+          xp={appData.user.xp}
+          currentStreak={appData.user.currentStreak}
+          animate={true}
+        />
+      )}
+
       <main className="flex-1 container mx-auto px-4 py-8 max-w-2xl">
         {renderContent()}
       </main>

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import type { Avatar } from '../../types';
 import { AvatarGrid } from '../Profile/AvatarGrid';
+import { BigOneSetupFlow } from '../TheBigOne/BigOneSetupFlow';
 
-type OnboardingStep = 'welcome' | 'avatar';
+type OnboardingStep = 'welcome' | 'avatar' | 'bigone';
 
 interface OnboardingFlowProps {
   starterAvatars: Avatar[];
-  onComplete: (ringName: string, epithet: string, avatarId: string) => Promise<void>;
+  onComplete: (ringName: string, epithet: string, avatarId: string, bigOneDescription?: string) => Promise<void>;
   onCheckUniqueness: (ringName: string, epithet: string) => Promise<boolean>;
 }
 
@@ -22,17 +23,15 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
 }) => {
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [selectedAvatar, setSelectedAvatar] = useState<string>(starterAvatars[0]?.id || '');
-  const [isCompleting, setIsCompleting] = useState(false);
+  const [bigOneDescription, setBigOneDescription] = useState<string>('');
   const [rookieName] = useState(generateRookieName());
 
   const handleComplete = async () => {
-    setIsCompleting(true);
     try {
-      // Auto-assigned rookie name, empty epithet for now
-      await onComplete(rookieName, '', selectedAvatar);
+      // Auto-assigned rookie name, empty epithet for now, optional Big One
+      await onComplete(rookieName, '', selectedAvatar, bigOneDescription || undefined);
     } catch (error) {
       console.error('Error completing onboarding:', error);
-      setIsCompleting(false);
     }
   };
 
@@ -88,15 +87,30 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
               Back
             </button>
             <button
-              onClick={handleComplete}
-              disabled={!selectedAvatar || isCompleting}
-              className={`btn-primary flex-1 ${(!selectedAvatar || isCompleting) ? 'opacity-50' : ''}`}
+              onClick={() => setStep('bigone')}
+              disabled={!selectedAvatar}
+              className={`btn-primary flex-1 ${!selectedAvatar ? 'opacity-50' : ''}`}
             >
-              {isCompleting ? 'Starting...' : 'Start Your Journey'}
+              Next: Set Your Big One
             </button>
           </div>
         </div>
       </div>
+    );
+  }
+
+  if (step === 'bigone') {
+    return (
+      <BigOneSetupFlow
+        onComplete={(description) => {
+          setBigOneDescription(description);
+          handleComplete();
+        }}
+        onSkip={() => {
+          setBigOneDescription('');
+          handleComplete();
+        }}
+      />
     );
   }
 

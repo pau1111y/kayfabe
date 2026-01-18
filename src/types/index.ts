@@ -72,7 +72,7 @@ export interface Goal {
   victoryPromo: string | null;
 }
 
-export interface QuickTag {
+export interface HotTag {
   id: string;
   note: string;
   createdAt: number;
@@ -130,7 +130,7 @@ export interface AppData {
   user: UserProfile | null;
   promos: Promo[];
   goals: Goal[];
-  quickTags: QuickTag[];
+  hotTags: HotTag[];
   runIns: RunIn[];
   openingContest: OpeningContest;
   belts: Belt[];

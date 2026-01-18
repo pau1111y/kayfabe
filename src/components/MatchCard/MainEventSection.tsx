@@ -4,13 +4,13 @@ import type { Goal, Promo } from '../../types';
 interface MainEventSectionProps {
   goals: Goal[];
   promos: Promo[];
-  onCompleteGoal: (goalId: string) => void;
+  onViewGoal: (goalId: string) => void;
 }
 
 export const MainEventSection: React.FC<MainEventSectionProps> = ({
   goals,
   promos,
-  onCompleteGoal,
+  onViewGoal,
 }) => {
   const mainEventGoals = goals.filter(g => g.tier === 'main' && g.status === 'active');
 
@@ -42,18 +42,19 @@ export const MainEventSection: React.FC<MainEventSectionProps> = ({
         const heatCount = linkedPromos.filter(p => p.impact === 'heat').length;
 
         return (
-          <div key={goal.id} className="main-event-card">
+          <div
+            key={goal.id}
+            onClick={() => onViewGoal(goal.id)}
+            className="main-event-card cursor-pointer hover:border-kayfabe-gold transition-all"
+          >
             <div className="flex justify-between items-start mb-2">
               <h4 className="text-kayfabe-cream text-lg font-bold flex items-center">
                 <span className="text-kayfabe-gold mr-2">⭐</span>
                 {goal.title}
               </h4>
-              <button
-                onClick={() => onCompleteGoal(goal.id)}
-                className="text-kayfabe-gold text-sm hover:text-kayfabe-cream transition-colors font-bold"
-              >
-                Complete
-              </button>
+              <span className="text-kayfabe-gray-light text-xs">
+                Click to view →
+              </span>
             </div>
 
             {linkedPromos.length > 0 && (

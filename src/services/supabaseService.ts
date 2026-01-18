@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { AppData, Promo, Goal, Belt, QuickTag, RunIn, Habit, Avatar } from '../types';
+import type { AppData, Promo, Goal, Belt, HotTag, RunIn, Habit, Avatar } from '../types';
 import { DEFAULT_BELTS, DEFAULT_HABITS } from '../utils/storage';
 import { AVATAR_CATALOG } from '../data/avatars';
 
@@ -64,8 +64,8 @@ export const supabaseService = {
         .eq('completed_date', today);
 
       // Load quick tags
-      const { data: quickTags } = await supabase
-        .from('quick_tags')
+      const { data: hotTags } = await supabase
+        .from('hot_tags')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -126,7 +126,7 @@ export const supabaseService = {
           requirement: b.requirement,
           earnedAt: b.earned_at ? new Date(b.earned_at).getTime() : null,
         })),
-        quickTags: (quickTags || []).map(qt => ({
+        hotTags: (hotTags || []).map(qt => ({
           id: qt.id,
           note: qt.note,
           createdAt: new Date(qt.created_at).getTime(),
@@ -326,11 +326,11 @@ export const supabaseService = {
   },
 
   // Quick Tags
-  async saveQuickTag(tag: QuickTag): Promise<void> {
+  async saveHotTag(tag: HotTag): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    await supabase.from('quick_tags').insert({
+    await supabase.from('hot_tags').insert({
       id: tag.id,
       user_id: user.id,
       note: tag.note,
@@ -339,7 +339,7 @@ export const supabaseService = {
     });
   },
 
-  async updateQuickTag(tagId: string, updates: Partial<QuickTag>): Promise<void> {
+  async updateHotTag(tagId: string, updates: Partial<HotTag>): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -348,7 +348,7 @@ export const supabaseService = {
     if (updates.note !== undefined) dbUpdates.note = updates.note;
 
     await supabase
-      .from('quick_tags')
+      .from('hot_tags')
       .update(dbUpdates)
       .eq('id', tagId)
       .eq('user_id', user.id);

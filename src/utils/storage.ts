@@ -34,7 +34,7 @@ export const getDefaultAppData = (): AppData => ({
   user: null,
   promos: [],
   goals: [],
-  quickTags: [],
+  hotTags: [],
   runIns: [],
   availableAvatars: [],
   openingContest: {

@@ -29,9 +29,12 @@ export const HabitList: React.FC<HabitListProps> = ({
       </div>
 
       {isCleanSweep && (
-        <div className="card border-kayfabe-gold text-center">
-          <p className="text-kayfabe-gold font-bold">CLEAN SWEEP!</p>
-          <p className="text-kayfabe-gray-light text-sm">+15 XP Bonus</p>
+        <div className="card border-kayfabe-gold bg-kayfabe-gold/10 text-center animate-pulse">
+          <p className="text-kayfabe-gold font-bold text-lg">🧹 THE CLEANER BONUS! 🧹</p>
+          <p className="text-kayfabe-cream text-sm mt-1">+15 XP Bonus</p>
+          <p className="text-kayfabe-gray-light text-xs italic mt-2">
+            You swept all the habits. Champions do the work.
+          </p>
         </div>
       )}
 

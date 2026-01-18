@@ -47,8 +47,10 @@ export const HabitItem: React.FC<HabitItemProps> = ({
       </button>
 
       {celebration && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-kayfabe-gold text-sm animate-pulse">
-          {celebration}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+          <div className="text-kayfabe-gold text-sm font-bold animate-bounce bg-kayfabe-black/80 px-2 py-1 rounded whitespace-nowrap">
+            {celebration}
+          </div>
         </div>
       )}
     </div>
