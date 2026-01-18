@@ -13,12 +13,12 @@ interface GoalCompletionProps {
 export const GoalCompletion: React.FC<GoalCompletionProps> = ({
   goal,
   promos = [],
-  hotTags = [],
-  runIns = [],
+  hotTags: _hotTags = [],
+  runIns: _runIns = [],
   onComplete,
   onCancel
 }) => {
-  const [step, setStep] = useState<'confirm' | 'journey' | 'promo' | 'victory'>('confirm');
+  const [step, setStep] = useState<'confirm' | 'journey' | 'promo' | 'victory' | 'success'>('confirm');
   const [victoryPromo, setVictoryPromo] = useState('');
 
   const isMainEvent = goal.tier === 'main';
