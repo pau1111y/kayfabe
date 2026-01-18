@@ -114,7 +114,7 @@ export const supabaseService = {
         goals: (goals || []).map(g => ({
           id: g.id,
           title: g.title,
-          tier: g.tier as 'opening' | 'midcard' | 'main' | 'runin',
+          tier: g.tier as 'midcard' | 'main' | 'runin',
           status: g.status as 'active' | 'completed',
           createdAt: new Date(g.created_at).getTime(),
           completedAt: g.completed_at ? new Date(g.completed_at).getTime() : null,
