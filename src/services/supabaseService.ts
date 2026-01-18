@@ -213,7 +213,9 @@ export const supabaseService = {
 
     if (error) {
       console.error('Error saving goal:', error);
-      throw error;
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      console.error('Goal data attempted:', { id: goal.id, title: goal.title, tier: goal.tier, user_id: user.id });
+      throw new Error(`Database error: ${error.message || error.hint || 'Unknown database error'}`);
     }
   },
 
@@ -274,7 +276,7 @@ export const supabaseService = {
 
     if (existing) {
       // Update existing
-      await supabase
+      const { error } = await supabase
         .from('the_big_one')
         .update({
           description,
@@ -282,13 +284,25 @@ export const supabaseService = {
           completed_at: percentage === 100 ? new Date().toISOString() : null,
         })
         .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating Big One:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        throw new Error(`Database error updating Big One: ${error.message || error.hint || 'Unknown database error'}`);
+      }
     } else {
       // Insert new
-      await supabase.from('the_big_one').insert({
+      const { error } = await supabase.from('the_big_one').insert({
         user_id: user.id,
         description,
         percentage,
       });
+
+      if (error) {
+        console.error('Error inserting Big One:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        throw new Error(`Database error inserting Big One: ${error.message || error.hint || 'Unknown database error'}`);
+      }
     }
   },
 
