@@ -298,15 +298,20 @@ function App() {
       victoryPromo: null,
     };
 
-    // Save to Supabase
-    await supabaseService.saveGoal(newGoal);
+    try {
+      // Save to Supabase
+      await supabaseService.saveGoal(newGoal);
 
-    // Update local state
-    setAppData(prev => prev ? ({
-      ...prev,
-      goals: [...prev.goals, newGoal],
-    }) : null);
-    setIsAddingGoal(false);
+      // Update local state
+      setAppData(prev => prev ? ({
+        ...prev,
+        goals: [...prev.goals, newGoal],
+      }) : null);
+      setIsAddingGoal(false);
+    } catch (error) {
+      console.error('Failed to add goal:', error);
+      alert('Failed to save goal. Please try again.');
+    }
   };
 
   const handleCompleteGoal = async (goalId: string, victoryPromo: string) => {

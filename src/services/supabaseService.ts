@@ -200,7 +200,7 @@ export const supabaseService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    await supabase.from('goals').insert({
+    const { error } = await supabase.from('goals').insert({
       id: goal.id,
       user_id: user.id,
       title: goal.title,
@@ -210,6 +210,11 @@ export const supabaseService = {
       created_at: new Date(goal.createdAt).toISOString(),
       completed_at: goal.completedAt ? new Date(goal.completedAt).toISOString() : null,
     });
+
+    if (error) {
+      console.error('Error saving goal:', error);
+      throw error;
+    }
   },
 
   // Update goal
