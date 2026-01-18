@@ -63,7 +63,7 @@ export const BookYourCard: React.FC<BookYourCardProps> = ({
             <span className="text-4xl">🎤</span>
             <h3 className="heading-2 mt-2">Promos Owed</h3>
             <p className="text-kayfabe-gray-light text-sm">
-              You worked these blocks but haven't told your story yet
+              You worked these segments but haven't told your story yet
             </p>
           </div>
 
@@ -163,7 +163,7 @@ export const BookYourCard: React.FC<BookYourCardProps> = ({
       <div className="text-center">
         <h2 className="heading-1 mb-2">Book Your Card</h2>
         <p className="text-kayfabe-gray-light text-sm">
-          {today} - You are the booker
+          Make your time matter today
         </p>
       </div>
 
@@ -275,12 +275,12 @@ export const BookYourCard: React.FC<BookYourCardProps> = ({
         </div>
       )}
 
-      {/* No blocks available */}
+      {/* No segments available */}
       {timeBlocks.length === 0 && (
         <div className="card text-center py-8">
-          <p className="text-kayfabe-gray-medium text-sm">No skill blocks created yet.</p>
+          <p className="text-kayfabe-gray-medium text-sm">No segments created yet.</p>
           <p className="text-kayfabe-gray-medium text-xs mt-2">
-            Add skill blocks in the Midcard tab first, then book them here.
+            Create segments in the Segments tab, then book them here.
           </p>
         </div>
       )}

@@ -979,7 +979,7 @@ function App() {
                     : 'text-kayfabe-gray-medium hover:text-kayfabe-cream'
                 }`}
               >
-                Skill Blocks
+                Segments
               </button>
             </div>
 

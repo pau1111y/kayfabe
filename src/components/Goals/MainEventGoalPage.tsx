@@ -265,7 +265,7 @@ export const MainEventGoalPage: React.FC<MainEventGoalPageProps> = ({
                   Your origin story is waiting to be written.
                 </p>
                 <p className="text-kayfabe-gray-medium text-xs mt-2">
-                  Link skill blocks in the Midcard, or log run-ins that contribute to this goal.
+                  Link segments in the Midcard, or log run-ins that contribute to this goal.
                 </p>
               </div>
             )}

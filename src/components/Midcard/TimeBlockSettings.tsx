@@ -80,24 +80,24 @@ export const TimeBlockSettings: React.FC<TimeBlockSettingsProps> = ({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="heading-1 mb-2">⏰ Midcard - Build Your Skills</h2>
-        <p className="text-kayfabe-gray-light text-sm">Where champions are forged</p>
+        <h2 className="heading-1 mb-2">⏰ Your Segments</h2>
+        <p className="text-kayfabe-gray-light text-sm">Book your time to matter</p>
       </div>
 
-      {/* Add New Time Block */}
+      {/* Add New Segment */}
       {!isAdding ? (
         <button onClick={() => setIsAdding(true)} className="btn-primary w-full">
-          + Add Skill Block
+          + Add Segment
         </button>
       ) : (
         <div className="card space-y-4">
-          <h3 className="heading-2">New Skill Block</h3>
+          <h3 className="heading-2">New Segment</h3>
 
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="Skill name (e.g., Creativity, Connection, Learning)"
+            placeholder="e.g., Day Job, Creative Work, Family Time"
             className="input-field"
             autoFocus
           />
@@ -108,7 +108,7 @@ export const TimeBlockSettings: React.FC<TimeBlockSettingsProps> = ({
             min="0"
             value={newHours}
             onChange={(e) => setNewHours(e.target.value)}
-            placeholder="Hours per day/week to build this skill"
+            placeholder="Hours (typical allocation)"
             className="input-field"
           />
 
@@ -128,14 +128,14 @@ export const TimeBlockSettings: React.FC<TimeBlockSettingsProps> = ({
           {goals.filter(g => g.status === 'active' && g.tier === 'main').length > 0 && (
             <div>
               <label className="text-kayfabe-gold text-sm block mb-2 font-bold">
-                What championship are you building this skill for?
+                Which goal does this time serve?
               </label>
               <select
                 value={newGoalId || ''}
                 onChange={(e) => setNewGoalId(e.target.value || null)}
                 className="input-field"
               >
-                <option value="">General skill development</option>
+                <option value="">Declare it each day</option>
                 {goals
                   .filter(g => g.status === 'active' && g.tier === 'main')
                   .map(goal => (
@@ -165,10 +165,10 @@ export const TimeBlockSettings: React.FC<TimeBlockSettingsProps> = ({
         </div>
       )}
 
-      {/* Existing Time Blocks */}
+      {/* Existing Segments */}
       {timeBlocks.length > 0 && (
         <div className="space-y-4">
-          <h3 className="heading-2">Your Time Blocks</h3>
+          <h3 className="heading-2">Your Segments</h3>
           {timeBlocks.map(block => (
             <div key={block.id} className="card space-y-3">
               <div className="flex justify-between items-start">
