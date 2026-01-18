@@ -48,7 +48,11 @@ export const getDefaultAppData = (): AppData => ({
     timeBlocks: [],
     dailyBudget: 24,
     lastResetDate: new Date().toISOString().split('T')[0],
+    cardBookedForDate: null,
+    showStarted: false,
   },
+  timeBlockPromos: [],
+  pendingPromoBlocks: [],
 });
 
 const migrateAppData = (data: any): AppData => {
@@ -57,6 +61,47 @@ const migrateAppData = (data: any): AppData => {
   // Add midcardConfig if missing
   if (!data.midcardConfig) {
     data.midcardConfig = defaultData.midcardConfig;
+  }
+
+  // Add new midcardConfig fields if missing
+  if (data.midcardConfig.cardBookedForDate === undefined) {
+    data.midcardConfig.cardBookedForDate = null;
+  }
+  if (data.midcardConfig.showStarted === undefined) {
+    data.midcardConfig.showStarted = false;
+  }
+
+  // Migrate existing TimeBlocks to include new booking fields
+  if (data.midcardConfig.timeBlocks) {
+    data.midcardConfig.timeBlocks = data.midcardConfig.timeBlocks.map((block: any) => ({
+      ...block,
+      bookedForDate: block.bookedForDate ?? null,
+      bookedHours: block.bookedHours ?? 0,
+      promoCompleted: block.promoCompleted ?? false,
+    }));
+  }
+
+  // Add timeBlockPromos if missing
+  if (!data.timeBlockPromos) {
+    data.timeBlockPromos = [];
+  }
+
+  // Add pendingPromoBlocks if missing
+  if (!data.pendingPromoBlocks) {
+    data.pendingPromoBlocks = [];
+  }
+
+  // Migrate existing RunIns to include new fields
+  if (data.runIns) {
+    data.runIns = data.runIns.map((runIn: any) => ({
+      ...runIn,
+      type: runIn.type ?? 'person',
+      momentTitle: runIn.momentTitle ?? null,
+      linkedGoalId: runIn.linkedGoalId ?? null,
+      hoursContributed: runIn.hoursContributed ?? 0,
+      entryPromo: runIn.entryPromo ?? null,
+      impact: runIn.impact ?? null,
+    }));
   }
 
   // Add updates array to theBigOne if missing

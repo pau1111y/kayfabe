@@ -14,6 +14,8 @@ import { HabitList } from './components/OpeningContest/HabitList';
 import { OpeningContestSettings } from './components/OpeningContest/OpeningContestSettings';
 import { TimeBlockList } from './components/Midcard/TimeBlockList';
 import { TimeBlockSettings } from './components/Midcard/TimeBlockSettings';
+import { BookYourCard } from './components/Midcard/BookYourCard';
+import { TimeBlockPromoFlow } from './components/Midcard/TimeBlockPromoFlow';
 import { MatchCardHeader } from './components/MatchCard/MatchCardHeader';
 import { BigOneHeadline } from './components/MatchCard/BigOneHeadline';
 import { MainEventSection } from './components/MatchCard/MainEventSection';
@@ -24,7 +26,7 @@ import { XPProgressBar } from './components/Shared/XPProgressBar';
 import { TheBigOnePage } from './components/TheBigOne/TheBigOnePage';
 import { MainEventGoalPage } from './components/Goals/MainEventGoalPage';
 import { useAuth } from './contexts/AuthContext';
-import type { AppData, Promo, Goal, GoalTier, GoalStatus, HotTag, RunIn, TimeBlock, BigOneUpdate } from './types';
+import type { AppData, Promo, Goal, GoalTier, GoalStatus, HotTag, RunIn, TimeBlock, BigOneUpdate, TimeBlockPromo } from './types';
 import { generateId } from './utils/storage';
 import { checkAchievements, checkAvatarUnlocks } from './utils/achievements';
 import { calculateXPWithMultiplier } from './utils/xp';
@@ -49,6 +51,13 @@ function App() {
   const [viewingBigOne, setViewingBigOne] = useState(false);
   const [viewingMainEventGoalId, setViewingMainEventGoalId] = useState<string | null>(null);
   const [showMidcardPromptForGoal, setShowMidcardPromptForGoal] = useState<Goal | null>(null);
+  const [timeBlockPromoContext, setTimeBlockPromoContext] = useState<{block: TimeBlock; actualHours: number} | null>(null);
+  const [midcardView, setMidcardView] = useState<'booking' | 'settings'>('booking');
+  const [catchUpPromoIndex, setCatchUpPromoIndex] = useState<number>(0);
+
+  // Track catch-up progress (used in catch-up flow)
+  const pendingPromosRemaining = appData?.pendingPromoBlocks.length || 0;
+  const catchUpProgress = pendingPromosRemaining > 0 ? `${catchUpPromoIndex + 1}/${catchUpPromoIndex + pendingPromosRemaining}` : null;
 
   // Load user data from Supabase when user logs in
   useEffect(() => {
@@ -64,6 +73,22 @@ function App() {
         if (data) {
           // Apply daily reset if needed
           const resetData = checkAndResetDaily(data);
+
+          // If new pending promo blocks were created during reset, save them
+          const newPendingBlocks = resetData.pendingPromoBlocks.filter(
+            ppb => !data.pendingPromoBlocks.some(
+              existing => existing.timeBlockId === ppb.timeBlockId && existing.date === ppb.date
+            )
+          );
+
+          for (const ppb of newPendingBlocks) {
+            try {
+              await supabaseService.savePendingPromoBlock(ppb);
+            } catch (err) {
+              console.error('Error saving pending promo block:', err);
+            }
+          }
+
           setAppData(resetData);
         } else {
           // First time user - initialize belts
@@ -87,7 +112,7 @@ function App() {
   useEffect(() => {
     if (!appData || !user) return;
 
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
         const today = new Date().toISOString().split('T')[0];
         const needsReset =
@@ -96,6 +121,22 @@ function App() {
 
         if (needsReset) {
           const resetData = checkAndResetDaily(appData);
+
+          // Save any new pending promo blocks
+          const newPendingBlocks = resetData.pendingPromoBlocks.filter(
+            ppb => !appData.pendingPromoBlocks.some(
+              existing => existing.timeBlockId === ppb.timeBlockId && existing.date === ppb.date
+            )
+          );
+
+          for (const ppb of newPendingBlocks) {
+            try {
+              await supabaseService.savePendingPromoBlock(ppb);
+            } catch (err) {
+              console.error('Error saving pending promo block:', err);
+            }
+          }
+
           setAppData(resetData);
         }
       }
@@ -559,6 +600,9 @@ function App() {
       linkedGoalId,
       timerStartedAt: null,
       createdAt: Date.now(),
+      bookedForDate: null,
+      bookedHours: 0,
+      promoCompleted: false,
     };
 
     setAppData({
@@ -629,7 +673,183 @@ function App() {
     const block = appData.midcardConfig.timeBlocks.find(b => b.id === blockId);
     if (!block) return;
 
-    handleUpdateTimeBlock(blockId, { isCompleted: !block.isCompleted });
+    // If completing the block, trigger the promo flow
+    if (!block.isCompleted) {
+      handleUpdateTimeBlock(blockId, { isCompleted: true });
+      // Trigger promo flow for this block
+      setTimeBlockPromoContext({
+        block: { ...block, isCompleted: true },
+        actualHours: block.loggedHours,
+      });
+    } else {
+      handleUpdateTimeBlock(blockId, { isCompleted: false });
+    }
+  };
+
+  // Daily booking handlers
+  const handleBookBlock = (blockId: string, hours: number) => {
+    if (!appData) return;
+    const today = new Date().toISOString().split('T')[0];
+    handleUpdateTimeBlock(blockId, {
+      bookedForDate: today,
+      bookedHours: hours,
+      promoCompleted: false,
+    });
+  };
+
+  const handleUnbookBlock = (blockId: string) => {
+    if (!appData) return;
+    handleUpdateTimeBlock(blockId, {
+      bookedForDate: null,
+      bookedHours: 0,
+    });
+  };
+
+  const handleStartShow = () => {
+    if (!appData) return;
+    const today = new Date().toISOString().split('T')[0];
+    setAppData({
+      ...appData,
+      midcardConfig: {
+        ...appData.midcardConfig,
+        cardBookedForDate: today,
+        showStarted: true,
+      },
+    });
+  };
+
+  // Handle catch-up promos flow
+  const handleCatchUpPromos = () => {
+    if (!appData || appData.pendingPromoBlocks.length === 0) return;
+
+    // Start the catch-up flow with the first pending block
+    const pendingBlock = appData.pendingPromoBlocks[0];
+
+    // Find the actual block (might have been reset, so create a synthetic one)
+    const block = appData.midcardConfig.timeBlocks.find(b => b.id === pendingBlock.timeBlockId);
+
+    const syntheticBlock: TimeBlock = block || {
+      id: pendingBlock.timeBlockId,
+      name: pendingBlock.timeBlockName,
+      allocatedHours: pendingBlock.bookedHours,
+      loggedHours: pendingBlock.actualHours,
+      isDaily: true,
+      isCompleted: true,
+      linkedGoalId: pendingBlock.linkedGoalId,
+      timerStartedAt: null,
+      createdAt: Date.now(),
+      bookedForDate: pendingBlock.date,
+      bookedHours: pendingBlock.bookedHours,
+      promoCompleted: false,
+    };
+
+    setTimeBlockPromoContext({
+      block: syntheticBlock,
+      actualHours: pendingBlock.actualHours,
+    });
+    setCatchUpPromoIndex(0);
+  };
+
+  // Handle time block promo completion
+  const handleTimeBlockPromoComplete = async (promo: TimeBlockPromo) => {
+    if (!appData || !appData.user) return;
+
+    // Apply streak multiplier to XP
+    const multipliedXP = calculateXPWithMultiplier(
+      promo.xpEarned,
+      appData.user.currentStreak
+    );
+
+    // Mark the block's promo as completed
+    const updatedTimeBlocks = appData.midcardConfig.timeBlocks.map(b =>
+      b.id === promo.timeBlockId ? { ...b, promoCompleted: true } : b
+    );
+
+    // Find the pending block to delete (if any)
+    const pendingToDelete = appData.pendingPromoBlocks.find(
+      p => p.timeBlockId === promo.timeBlockId
+    );
+
+    // Remove from pending if it was there
+    const updatedPendingBlocks = appData.pendingPromoBlocks.filter(
+      p => p.timeBlockId !== promo.timeBlockId
+    );
+
+    // Update local state
+    const updated: AppData = {
+      ...appData,
+      timeBlockPromos: [...appData.timeBlockPromos, promo],
+      pendingPromoBlocks: updatedPendingBlocks,
+      midcardConfig: {
+        ...appData.midcardConfig,
+        timeBlocks: updatedTimeBlocks,
+      },
+      user: {
+        ...appData.user,
+        xp: appData.user.xp + multipliedXP,
+      },
+    };
+    updated.belts = checkAchievements(updated);
+
+    // Check for avatar unlocks
+    if (updated.user) {
+      const newlyUnlockedAvatars = checkAvatarUnlocks(updated.user.xp, appData.availableAvatars);
+      if (newlyUnlockedAvatars.length > 0) {
+        updated.availableAvatars = [...appData.availableAvatars, ...newlyUnlockedAvatars];
+        await supabaseService.unlockAvatars(newlyUnlockedAvatars.map(a => a.id));
+      }
+    }
+
+    // Save to Supabase
+    try {
+      // Save the time block promo
+      await supabaseService.saveTimeBlockPromo(promo);
+
+      // Delete the pending promo block if it existed
+      if (pendingToDelete) {
+        await supabaseService.deletePendingPromoBlock(pendingToDelete.timeBlockId, pendingToDelete.date);
+      }
+
+      // Save updated XP
+      if (updated.user) {
+        await supabaseService.updateProfile({ xp: updated.user.xp });
+      }
+    } catch (error) {
+      console.error('Error saving time block promo:', error);
+    }
+
+    setAppData(updated);
+
+    // Check if there are more pending promos to catch up on
+    if (updatedPendingBlocks.length > 0) {
+      // Move to next pending block
+      const nextPending = updatedPendingBlocks[0];
+      const nextBlock = updated.midcardConfig.timeBlocks.find(b => b.id === nextPending.timeBlockId);
+
+      const syntheticBlock: TimeBlock = nextBlock || {
+        id: nextPending.timeBlockId,
+        name: nextPending.timeBlockName,
+        allocatedHours: nextPending.bookedHours,
+        loggedHours: nextPending.actualHours,
+        isDaily: true,
+        isCompleted: true,
+        linkedGoalId: nextPending.linkedGoalId,
+        timerStartedAt: null,
+        createdAt: Date.now(),
+        bookedForDate: nextPending.date,
+        bookedHours: nextPending.bookedHours,
+        promoCompleted: false,
+      };
+
+      setTimeBlockPromoContext({
+        block: syntheticBlock,
+        actualHours: nextPending.actualHours,
+      });
+      setCatchUpPromoIndex(prev => prev + 1);
+    } else {
+      setTimeBlockPromoContext(null);
+      setCatchUpPromoIndex(0);
+    }
   };
 
   const handleHotTagComplete = async (tag: HotTag) => {
@@ -673,6 +893,36 @@ function App() {
 
   // Main app content based on active tab
   const renderContent = () => {
+    // Show TimeBlockPromoFlow when a block is completed
+    if (timeBlockPromoContext) {
+      const linkedGoal = timeBlockPromoContext.block.linkedGoalId
+        ? appData?.goals.find(g => g.id === timeBlockPromoContext.block.linkedGoalId) || null
+        : null;
+
+      return (
+        <div className="relative">
+          {/* Catch-up progress indicator */}
+          {catchUpProgress && (
+            <div className="absolute top-4 right-4 bg-kayfabe-gray-dark px-3 py-1 rounded-full z-10">
+              <span className="text-kayfabe-gold text-sm font-bold">
+                Promo {catchUpProgress}
+              </span>
+            </div>
+          )}
+          <TimeBlockPromoFlow
+            block={timeBlockPromoContext.block}
+            linkedGoal={linkedGoal}
+            actualHours={timeBlockPromoContext.actualHours}
+            onComplete={handleTimeBlockPromoComplete}
+            onCancel={() => {
+              setTimeBlockPromoContext(null);
+              setCatchUpPromoIndex(0);
+            }}
+          />
+        </div>
+      );
+    }
+
     if (isWritingPromo) {
       return (
         <PromoFlow
@@ -709,15 +959,54 @@ function App() {
       case 'midcard':
         return (
           <div className="space-y-6">
-            <TimeBlockSettings
-              timeBlocks={appData!.midcardConfig.timeBlocks}
-              goals={appData!.goals}
-              onAddTimeBlock={handleAddTimeBlock}
-              onDeleteTimeBlock={handleDeleteTimeBlock}
-              onStartTimer={handleStartTimer}
-              onStopTimer={handleStopTimer}
-              onManualLog={handleManualLog}
-            />
+            {/* Tab Toggle */}
+            <div className="flex border-b border-kayfabe-gray-dark">
+              <button
+                onClick={() => setMidcardView('booking')}
+                className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-all ${
+                  midcardView === 'booking'
+                    ? 'text-kayfabe-gold border-b-2 border-kayfabe-gold'
+                    : 'text-kayfabe-gray-medium hover:text-kayfabe-cream'
+                }`}
+              >
+                Book Your Card
+              </button>
+              <button
+                onClick={() => setMidcardView('settings')}
+                className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-all ${
+                  midcardView === 'settings'
+                    ? 'text-kayfabe-gold border-b-2 border-kayfabe-gold'
+                    : 'text-kayfabe-gray-medium hover:text-kayfabe-cream'
+                }`}
+              >
+                Skill Blocks
+              </button>
+            </div>
+
+            {midcardView === 'booking' ? (
+              <BookYourCard
+                timeBlocks={appData!.midcardConfig.timeBlocks}
+                goals={appData!.goals}
+                dailyBudget={appData!.midcardConfig.dailyBudget}
+                cardBookedForDate={appData!.midcardConfig.cardBookedForDate}
+                showStarted={appData!.midcardConfig.showStarted}
+                pendingPromoBlocks={appData!.pendingPromoBlocks}
+                onBookBlock={handleBookBlock}
+                onUnbookBlock={handleUnbookBlock}
+                onStartShow={handleStartShow}
+                onCatchUpPromos={handleCatchUpPromos}
+              />
+            ) : (
+              <TimeBlockSettings
+                timeBlocks={appData!.midcardConfig.timeBlocks}
+                goals={appData!.goals}
+                onAddTimeBlock={handleAddTimeBlock}
+                onDeleteTimeBlock={handleDeleteTimeBlock}
+                onStartTimer={handleStartTimer}
+                onStopTimer={handleStopTimer}
+                onManualLog={handleManualLog}
+              />
+            )}
           </div>
         );
 
@@ -837,6 +1126,7 @@ function App() {
           return (
             <div className="space-y-6">
               <RunInFlow
+                goals={appData!.goals}
                 onComplete={handleRunInComplete}
                 onCancel={() => setShowRunIn(false)}
               />
@@ -897,6 +1187,7 @@ function App() {
                 hotTags={appData.hotTags}
                 runIns={appData.runIns}
                 timeBlocks={appData.midcardConfig.timeBlocks}
+                timeBlockPromos={appData.timeBlockPromos}
                 onComplete={async (victoryPromo: string) => {
                   if (!appData.user) return;
 

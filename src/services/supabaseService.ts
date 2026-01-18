@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { AppData, Promo, Goal, Belt, HotTag, RunIn, Habit, Avatar } from '../types';
+import type { AppData, Promo, Goal, Belt, HotTag, RunIn, Habit, Avatar, TimeBlockPromo, PendingPromoBlock } from '../types';
 import { DEFAULT_BELTS, DEFAULT_HABITS } from '../utils/storage';
 import { AVATAR_CATALOG } from '../data/avatars';
 
@@ -77,6 +77,20 @@ export const supabaseService = {
         .eq('user_id', user.id)
         .order('last_update', { ascending: false });
 
+      // Load time block promos
+      const { data: timeBlockPromos } = await supabase
+        .from('time_block_promos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      // Load pending promo blocks
+      const { data: pendingPromoBlocks } = await supabase
+        .from('pending_promo_blocks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false });
+
       // Transform to AppData format
       const appData: AppData = {
         user: {
@@ -135,11 +149,17 @@ export const supabaseService = {
         })),
         runIns: (runIns || []).map(ri => ({
           id: ri.id,
-          name: ri.name,
-          role: ri.role,
-          notes: ri.notes,
+          type: (ri.type as 'person' | 'moment') || 'person',
+          name: ri.name || '',
+          role: ri.role || '',
+          momentTitle: ri.moment_title || null,
+          notes: ri.notes || '',
+          linkedGoalId: ri.linked_goal_id || null,
+          hoursContributed: ri.hours_contributed || 0,
           firstEncounter: new Date(ri.first_encounter).getTime(),
           lastUpdate: new Date(ri.last_update).getTime(),
+          entryPromo: ri.entry_promo || null,
+          impact: ri.impact as 'pop' | 'heat' | null,
         })),
         openingContest: {
           habits: habits && habits.length > 0 ? habits.map(h => ({
@@ -155,7 +175,32 @@ export const supabaseService = {
           timeBlocks: [],
           dailyBudget: 24,
           lastResetDate: today,
+          cardBookedForDate: null,
+          showStarted: false,
         },
+        timeBlockPromos: (timeBlockPromos || []).map(tbp => ({
+          id: tbp.id,
+          timeBlockId: tbp.time_block_id,
+          timeBlockName: tbp.time_block_name,
+          linkedGoalId: tbp.linked_goal_id,
+          type: tbp.type as 'face' | 'heel',
+          content: tbp.content,
+          faceFollowUp: tbp.face_follow_up,
+          impact: tbp.impact as 'pop' | 'heat',
+          bookedHours: parseFloat(tbp.booked_hours) || 0,
+          actualHours: parseFloat(tbp.actual_hours) || 0,
+          date: tbp.date,
+          createdAt: new Date(tbp.created_at).getTime(),
+          xpEarned: tbp.xp_earned,
+        })),
+        pendingPromoBlocks: (pendingPromoBlocks || []).map(ppb => ({
+          timeBlockId: ppb.time_block_id,
+          timeBlockName: ppb.time_block_name,
+          linkedGoalId: ppb.linked_goal_id,
+          bookedHours: parseFloat(ppb.booked_hours) || 0,
+          actualHours: parseFloat(ppb.actual_hours) || 0,
+          date: ppb.date,
+        })),
         availableAvatars: [],
       };
 
@@ -389,11 +434,17 @@ export const supabaseService = {
     await supabase.from('run_ins').insert({
       id: runIn.id,
       user_id: user.id,
+      type: runIn.type,
       name: runIn.name,
       role: runIn.role,
+      moment_title: runIn.momentTitle,
       notes: runIn.notes,
+      linked_goal_id: runIn.linkedGoalId,
+      hours_contributed: runIn.hoursContributed,
       first_encounter: new Date(runIn.firstEncounter).toISOString(),
       last_update: new Date(runIn.lastUpdate).toISOString(),
+      entry_promo: runIn.entryPromo,
+      impact: runIn.impact,
     });
   },
 
@@ -627,5 +678,86 @@ export const supabaseService = {
     }
 
     return data === null; // Returns true if no match (unique), false if exists
+  },
+
+  // Time Block Promos
+  async saveTimeBlockPromo(promo: TimeBlockPromo): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase.from('time_block_promos').insert({
+      id: promo.id,
+      user_id: user.id,
+      time_block_id: promo.timeBlockId,
+      time_block_name: promo.timeBlockName,
+      linked_goal_id: promo.linkedGoalId,
+      type: promo.type,
+      content: promo.content,
+      face_follow_up: promo.faceFollowUp,
+      impact: promo.impact,
+      booked_hours: promo.bookedHours,
+      actual_hours: promo.actualHours,
+      date: promo.date,
+      xp_earned: promo.xpEarned,
+      created_at: new Date(promo.createdAt).toISOString(),
+    });
+
+    if (error) {
+      console.error('Error saving time block promo:', error);
+      throw new Error(`Database error: ${error.message || 'Unknown database error'}`);
+    }
+  },
+
+  // Pending Promo Blocks
+  async savePendingPromoBlock(block: PendingPromoBlock): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase.from('pending_promo_blocks').insert({
+      user_id: user.id,
+      time_block_id: block.timeBlockId,
+      time_block_name: block.timeBlockName,
+      linked_goal_id: block.linkedGoalId,
+      booked_hours: block.bookedHours,
+      actual_hours: block.actualHours,
+      date: block.date,
+    });
+
+    if (error) {
+      console.error('Error saving pending promo block:', error);
+      throw new Error(`Database error: ${error.message || 'Unknown database error'}`);
+    }
+  },
+
+  async deletePendingPromoBlock(timeBlockId: string, date: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('pending_promo_blocks')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('time_block_id', timeBlockId)
+      .eq('date', date);
+
+    if (error) {
+      console.error('Error deleting pending promo block:', error);
+      throw new Error(`Database error: ${error.message || 'Unknown database error'}`);
+    }
+  },
+
+  async clearAllPendingPromoBlocks(): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('pending_promo_blocks')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error clearing pending promo blocks:', error);
+      throw new Error(`Database error: ${error.message || 'Unknown database error'}`);
+    }
   },
 };
