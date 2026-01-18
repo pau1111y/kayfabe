@@ -129,6 +129,7 @@ export const supabaseService = {
         hotTags: (hotTags || []).map(qt => ({
           id: qt.id,
           note: qt.note,
+          characterType: qt.character_type as 'face' | 'heel',
           createdAt: new Date(qt.created_at).getTime(),
           dismissed: qt.dismissed,
         })),
@@ -349,13 +350,20 @@ export const supabaseService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    await supabase.from('hot_tags').insert({
+    const { error } = await supabase.from('hot_tags').insert({
       id: tag.id,
       user_id: user.id,
       note: tag.note,
+      character_type: tag.characterType,
       dismissed: tag.dismissed,
       created_at: new Date(tag.createdAt).toISOString(),
     });
+
+    if (error) {
+      console.error('Error saving hot tag:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw new Error(`Database error: ${error.message || error.hint || 'Unknown database error'}`);
+    }
   },
 
   async updateHotTag(tagId: string, updates: Partial<HotTag>): Promise<void> {

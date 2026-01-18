@@ -75,6 +75,7 @@ export interface Goal {
 export interface HotTag {
   id: string;
   note: string;
+  characterType: 'face' | 'heel';
   createdAt: number;
   dismissed: boolean;
 }
