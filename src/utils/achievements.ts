@@ -48,7 +48,7 @@ export const checkAchievements = (data: AppData): Belt[] => {
 
   // Intercontinental - Complete goals in all tiers
   const completedTiers = new Set(data.goals.filter(g => g.status === 'completed').map(g => g.tier));
-  if (completedTiers.has('opening') && completedTiers.has('midcard') && completedTiers.has('main')) {
+  if (completedTiers.has('midcard') && completedTiers.has('main')) {
     const belt = belts.find(b => b.id === 'intercontinental');
     if (belt && !belt.earnedAt) belt.earnedAt = now;
   }
@@ -57,6 +57,20 @@ export const checkAchievements = (data: AppData): Belt[] => {
   if (data.user?.theBigOne && data.user.theBigOne.percentage >= 50) {
     const belt = belts.find(b => b.id === 'mitb');
     if (belt && !belt.earnedAt) belt.earnedAt = now;
+  }
+
+  // World Heavyweight - Complete a main event with 50+ midcard hours
+  const completedMainEvents = data.goals.filter(g => g.tier === 'main' && g.status === 'completed');
+  for (const goal of completedMainEvents) {
+    const linkedBlocks = data.midcardConfig.timeBlocks.filter(b => b.linkedGoalId === goal.id);
+    const totalHours = linkedBlocks.reduce((sum, b) => sum + b.loggedHours, 0);
+    if (totalHours >= 50) {
+      const belt = belts.find(b => b.id === 'whc');
+      if (belt && !belt.earnedAt) {
+        belt.earnedAt = now;
+        break; // Only award once
+      }
+    }
   }
 
   // Grand Slam - Hold 4+ belts

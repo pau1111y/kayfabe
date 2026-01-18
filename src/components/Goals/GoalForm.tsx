@@ -7,9 +7,8 @@ interface GoalFormProps {
 }
 
 const tierOptions: { value: GoalTier; label: string; description: string }[] = [
-  { value: 'main', label: 'Main Event ⭐', description: 'Major goals, big projects' },
-  { value: 'midcard', label: 'Midcard', description: 'Ongoing work, skill building' },
-  { value: 'opening', label: 'Opening Contest', description: 'Daily habits, routine builders' },
+  { value: 'main', label: 'Main Event ⭐', description: 'Championship moments earned in the midcard' },
+  { value: 'midcard', label: 'Midcard', description: 'Where champions are forged' },
 ];
 
 export const GoalForm: React.FC<GoalFormProps> = ({ onSubmit, onCancel }) => {

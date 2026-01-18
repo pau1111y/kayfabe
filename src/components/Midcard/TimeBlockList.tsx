@@ -1,16 +1,18 @@
 import React from 'react';
-import type { TimeBlock } from '../../types';
+import type { TimeBlock, Goal } from '../../types';
 import { TimeBlockItem } from './TimeBlockItem';
 
 interface TimeBlockListProps {
   timeBlocks: TimeBlock[];
   dailyBudget: number;
+  goals?: Goal[];
   onToggleComplete: (blockId: string) => void;
 }
 
 export const TimeBlockList: React.FC<TimeBlockListProps> = ({
   timeBlocks,
   dailyBudget,
+  goals = [],
   onToggleComplete,
 }) => {
   const totalAllocated = timeBlocks.reduce((sum, block) => sum + block.allocatedHours, 0);
@@ -19,9 +21,9 @@ export const TimeBlockList: React.FC<TimeBlockListProps> = ({
   if (timeBlocks.length === 0) {
     return (
       <div className="card text-center py-8">
-        <p className="text-kayfabe-gray-medium text-sm">No time blocks yet.</p>
+        <p className="text-kayfabe-gray-medium text-sm">The midcard is where you prove yourself.</p>
         <p className="text-kayfabe-gray-medium text-xs mt-2">
-          Add time blocks in the Midcard tab.
+          What skills are you building? Add time blocks in the Midcard tab.
         </p>
       </div>
     );
@@ -36,14 +38,21 @@ export const TimeBlockList: React.FC<TimeBlockListProps> = ({
       </div>
 
       <div className="time-block-table">
-        {timeBlocks.map(block => (
-          <TimeBlockItem
-            key={block.id}
-            block={block}
-            onToggleComplete={() => onToggleComplete(block.id)}
-            isMatchCard={true}
-          />
-        ))}
+        {timeBlocks.map(block => {
+          const linkedGoal = block.linkedGoalId
+            ? goals.find(g => g.id === block.linkedGoalId)
+            : undefined;
+
+          return (
+            <TimeBlockItem
+              key={block.id}
+              block={block}
+              linkedGoal={linkedGoal}
+              onToggleComplete={() => onToggleComplete(block.id)}
+              isMatchCard={true}
+            />
+          );
+        })}
       </div>
 
       <div className="flex justify-between items-center pt-2 border-t border-kayfabe-gray-dark">

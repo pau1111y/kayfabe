@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Goal, Promo, HotTag, RunIn } from '../../types';
+import type { Goal, Promo, HotTag, RunIn, TimeBlock } from '../../types';
 import { GoalCompletion } from './GoalCompletion';
 
 interface MainEventGoalPageProps {
@@ -7,6 +7,7 @@ interface MainEventGoalPageProps {
   promos: Promo[];
   hotTags: HotTag[];
   runIns: RunIn[];
+  timeBlocks?: TimeBlock[];
   onComplete: (victoryPromo: string) => void;
   onBack: () => void;
 }
@@ -16,6 +17,7 @@ export const MainEventGoalPage: React.FC<MainEventGoalPageProps> = ({
   promos,
   hotTags,
   runIns,
+  timeBlocks = [],
   onComplete,
   onBack,
 }) => {
@@ -43,6 +45,7 @@ export const MainEventGoalPage: React.FC<MainEventGoalPageProps> = ({
             promos={promos}
             hotTags={hotTags}
             runIns={runIns}
+            timeBlocks={timeBlocks}
             onComplete={(victoryPromo) => {
               setShowCompletion(false);
               onComplete(victoryPromo);

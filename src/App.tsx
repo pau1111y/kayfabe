@@ -3,6 +3,7 @@ import { Navigation } from './components/Layout/Navigation';
 import { PromoFlow } from './components/Promo/PromoFlow';
 import { GoalForm } from './components/Goals/GoalForm';
 import { GoalCompletion } from './components/Goals/GoalCompletion';
+import { MidcardPrompt } from './components/Goals/MidcardPrompt';
 import { TradingCard } from './components/Profile/TradingCard';
 import { StreakDisplay } from './components/Profile/StreakDisplay';
 import { BeltDisplay } from './components/Profile/BeltDisplay';
@@ -47,6 +48,7 @@ function App() {
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [viewingBigOne, setViewingBigOne] = useState(false);
   const [viewingMainEventGoalId, setViewingMainEventGoalId] = useState<string | null>(null);
+  const [showMidcardPromptForGoal, setShowMidcardPromptForGoal] = useState<Goal | null>(null);
 
   // Load user data from Supabase when user logs in
   useEffect(() => {
@@ -308,9 +310,16 @@ function App() {
         goals: [...prev.goals, newGoal],
       }) : null);
       setIsAddingGoal(false);
+
+      // If it's a main event, show the midcard prompt
+      if (tier === 'main') {
+        setShowMidcardPromptForGoal(newGoal);
+      }
     } catch (error) {
       console.error('Failed to add goal:', error);
-      alert('Failed to save goal. Please try again.');
+      // Show more detailed error message
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to save goal: ${errorMessage}\n\nPlease check the console for details.`);
     }
   };
 
@@ -789,8 +798,25 @@ function App() {
             <div className="space-y-6">
               <GoalCompletion
                 goal={appData!.goals.find(g => g.id === completingGoalId)!}
+                promos={appData!.promos}
+                timeBlocks={appData!.midcardConfig.timeBlocks}
                 onComplete={(victoryPromo) => handleCompleteGoal(completingGoalId, victoryPromo)}
                 onCancel={() => setCompletingGoalId(null)}
+              />
+            </div>
+          );
+        }
+
+        if (showMidcardPromptForGoal) {
+          return (
+            <div className="space-y-6">
+              <MidcardPrompt
+                goal={showMidcardPromptForGoal}
+                onCreateSkills={() => {
+                  setShowMidcardPromptForGoal(null);
+                  setActiveTab('midcard');
+                }}
+                onSkipForNow={() => setShowMidcardPromptForGoal(null)}
               />
             </div>
           );
@@ -870,6 +896,7 @@ function App() {
                 promos={appData.promos}
                 hotTags={appData.hotTags}
                 runIns={appData.runIns}
+                timeBlocks={appData.midcardConfig.timeBlocks}
                 onComplete={async (victoryPromo: string) => {
                   if (!appData.user) return;
 
@@ -927,10 +954,10 @@ function App() {
               <div className="space-y-3">
                 <div className="text-center">
                   <h2 className="text-kayfabe-gold text-xs uppercase tracking-widest font-bold mb-1">
-                    Hall of Fame Career
+                    🏆 Hall of Fame Career
                   </h2>
                   <p className="text-kayfabe-gray-light text-xs italic">
-                    The legendary story. The Big One.
+                    Your ultimate vision
                   </p>
                 </div>
                 <div onClick={() => setViewingBigOne(true)} className="cursor-pointer">
@@ -952,12 +979,13 @@ function App() {
                   ⭐ Main Event
                 </h2>
                 <p className="text-kayfabe-gray-medium text-xs">
-                  The lofty goals worth savoring
+                  Championships you're earning through the grind
                 </p>
               </div>
               <MainEventSection
                 goals={appData!.goals}
                 promos={appData!.promos}
+                timeBlocks={appData!.midcardConfig.timeBlocks}
                 onViewGoal={(id) => setViewingMainEventGoalId(id)}
               />
             </div>
@@ -973,12 +1001,13 @@ function App() {
                     ⏰ Midcard
                   </h2>
                   <p className="text-kayfabe-gray-medium text-xs">
-                    Make the most of your ring time
+                    Where champions are forged
                   </p>
                 </div>
                 <TimeBlockList
                   timeBlocks={appData.midcardConfig.timeBlocks}
                   dailyBudget={appData.midcardConfig.dailyBudget}
+                  goals={appData.goals}
                   onToggleComplete={handleToggleTimeBlockComplete}
                 />
               </div>
@@ -994,10 +1023,10 @@ function App() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <h2 className="text-kayfabe-cream text-sm uppercase tracking-wider font-bold">
-                    🏋️ Opening Contest
+                    🎆 Opening Contest
                   </h2>
                   <p className="text-kayfabe-gray-medium text-xs">
-                    Set the energy for the show
+                    Daily foundations
                   </p>
                 </div>
                 <HabitList

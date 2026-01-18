@@ -10,6 +10,7 @@ export const DEFAULT_BELTS: Belt[] = [
   { id: 'intercontinental', name: 'Intercontinental Championship', requirement: 'Complete goals in all tiers', earnedAt: null },
   { id: 'royalrumble', name: 'Royal Rumble Winner', requirement: '30 Opening Contest habits in 30 days', earnedAt: null },
   { id: 'mitb', name: 'Money in the Bank', requirement: 'Move The Big One past 50%', earnedAt: null },
+  { id: 'whc', name: 'World Heavyweight Champion', requirement: 'Complete a main event with 50+ midcard hours', earnedAt: null },
   { id: 'grandslam', name: 'Grand Slam Champion', requirement: 'Hold 4+ belts simultaneously', earnedAt: null },
 ];
 

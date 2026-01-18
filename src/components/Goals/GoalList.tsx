@@ -8,7 +8,7 @@ interface GoalListProps {
   onCompleteGoal: (goalId: string) => void;
 }
 
-const tierOrder: GoalTier[] = ['main', 'midcard', 'opening'];
+const tierOrder: GoalTier[] = ['main', 'midcard'];
 
 export const GoalList: React.FC<GoalListProps> = ({ goals, promos, onCompleteGoal }) => {
   const activeGoals = goals.filter(g => g.status === 'active');

@@ -8,7 +8,6 @@ interface GoalCardProps {
 }
 
 const tierLabels: Record<string, string> = {
-  opening: 'Opening Contest',
   midcard: 'Midcard',
   main: 'Main Event',
   runin: 'Run-In',

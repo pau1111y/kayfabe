@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import type { Goal, Promo, HotTag, RunIn } from '../../types';
+import type { Goal, Promo, HotTag, RunIn, TimeBlock } from '../../types';
 
 interface GoalCompletionProps {
   goal: Goal;
   promos?: Promo[];
   hotTags?: HotTag[];
   runIns?: RunIn[];
+  timeBlocks?: TimeBlock[];
   onComplete: (victoryPromo: string) => void;
   onCancel: () => void;
 }
@@ -15,6 +16,7 @@ export const GoalCompletion: React.FC<GoalCompletionProps> = ({
   promos = [],
   hotTags: _hotTags = [],
   runIns: _runIns = [],
+  timeBlocks = [],
   onComplete,
   onCancel
 }) => {
@@ -36,6 +38,11 @@ export const GoalCompletion: React.FC<GoalCompletionProps> = ({
   const journeyDays = firstPromo
     ? Math.ceil((Date.now() - firstPromo.createdAt) / (1000 * 60 * 60 * 24))
     : 0;
+
+  // Calculate midcard origin story
+  const linkedBlocks = timeBlocks.filter(b => b.linkedGoalId === goal.id);
+  const midcardHours = linkedBlocks.reduce((sum, b) => sum + b.loggedHours, 0);
+  const midcardSkills = linkedBlocks.map(b => b.name);
 
   if (step === 'confirm') {
     return (
@@ -103,6 +110,29 @@ export const GoalCompletion: React.FC<GoalCompletionProps> = ({
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-4">
+              {/* Midcard Hours - The Origin Story (Featured First if exists) */}
+              {midcardHours > 0 && (
+                <div className="main-event-card text-center py-6 col-span-2 border-kayfabe-gold border-2">
+                  <p className="text-6xl font-bold text-kayfabe-gold mb-2">{Math.round(midcardHours)}</p>
+                  <p className="text-kayfabe-gold text-sm uppercase tracking-wider">Hours in the Midcard</p>
+                  <p className="text-kayfabe-gray-light text-xs mt-2">
+                    YOU put in the work to earn this championship
+                  </p>
+                  {midcardSkills.length > 0 && (
+                    <div className="flex flex-wrap gap-1 justify-center mt-3">
+                      {midcardSkills.map((skill, idx) => (
+                        <span key={idx} className="px-2 py-1 bg-kayfabe-gray-dark text-kayfabe-gold text-xs rounded">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-kayfabe-cream text-xs mt-2 italic">
+                    Every hour was YOU cutting your teeth, getting disciplined, proving yourself
+                  </p>
+                </div>
+              )}
+
               <div className="main-event-card text-center py-6">
                 <p className="text-5xl font-bold text-kayfabe-cream mb-2">{relatedPromos.length}</p>
                 <p className="text-kayfabe-gold text-sm uppercase tracking-wider">Promos Cut</p>

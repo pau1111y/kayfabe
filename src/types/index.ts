@@ -1,6 +1,6 @@
 export type PromoType = 'face' | 'heel';
 export type Impact = 'pop' | 'heat';
-export type GoalTier = 'opening' | 'midcard' | 'runin' | 'main';
+export type GoalTier = 'midcard' | 'runin' | 'main';
 export type GoalStatus = 'active' | 'completed' | 'archived';
 
 export interface BigOneUpdate {
