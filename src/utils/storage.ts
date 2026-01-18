@@ -89,5 +89,6 @@ export const saveAppData = (data: AppData): void => {
 };
 
 export const generateId = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Generate a proper UUID v4 for Supabase compatibility
+  return crypto.randomUUID();
 };
