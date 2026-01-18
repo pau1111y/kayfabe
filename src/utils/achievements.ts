@@ -46,9 +46,9 @@ export const checkAchievements = (data: AppData): Belt[] => {
     if (belt && !belt.earnedAt) belt.earnedAt = now;
   }
 
-  // Intercontinental - Complete goals in all tiers
-  const completedTiers = new Set(data.goals.filter(g => g.status === 'completed').map(g => g.tier));
-  if (completedTiers.has('midcard') && completedTiers.has('main')) {
+  // Intercontinental - Complete 3 Main Events
+  const completedMainEventCount = data.goals.filter(g => g.tier === 'main' && g.status === 'completed').length;
+  if (completedMainEventCount >= 3) {
     const belt = belts.find(b => b.id === 'intercontinental');
     if (belt && !belt.earnedAt) belt.earnedAt = now;
   }

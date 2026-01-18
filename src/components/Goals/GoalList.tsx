@@ -8,7 +8,7 @@ interface GoalListProps {
   onCompleteGoal: (goalId: string) => void;
 }
 
-const tierOrder: GoalTier[] = ['main', 'midcard'];
+const tierOrder: GoalTier[] = ['main', 'runin'];
 
 export const GoalList: React.FC<GoalListProps> = ({ goals, promos, onCompleteGoal }) => {
   const activeGoals = goals.filter(g => g.status === 'active');
@@ -16,9 +16,9 @@ export const GoalList: React.FC<GoalListProps> = ({ goals, promos, onCompleteGoa
   if (activeGoals.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-kayfabe-gray-medium">No active storylines.</p>
+        <p className="text-kayfabe-gray-medium">No active Main Events.</p>
         <p className="text-kayfabe-gray-medium text-sm mt-2">
-          Add a storyline to start tracking your goals.
+          Add a Main Event to start booking your time toward something monumental.
         </p>
       </div>
     );

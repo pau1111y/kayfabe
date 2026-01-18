@@ -1353,13 +1353,13 @@ function App() {
               </button>
             </div>
 
-            {/* Add Storyline Button */}
+            {/* Add Main Event Button */}
             <div className="text-center pt-2">
               <button
                 onClick={() => setIsAddingGoal(true)}
                 className="btn-secondary w-full"
               >
-                + Add Storyline
+                + Add Main Event
               </button>
             </div>
           </div>

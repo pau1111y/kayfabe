@@ -7,10 +7,10 @@ export const DEFAULT_BELTS: Belt[] = [
   { id: 'hardcore', name: 'Hardcore Championship', requirement: '10 heel promos with face follow-ups', earnedAt: null },
   { id: 'tagteam', name: 'Tag Team Championship', requirement: 'Invite a friend who logs 7 days', earnedAt: null },
   { id: '247', name: '24/7 Championship', requirement: 'Log at 5+ different hours in one day', earnedAt: null },
-  { id: 'intercontinental', name: 'Intercontinental Championship', requirement: 'Complete goals in all tiers', earnedAt: null },
+  { id: 'intercontinental', name: 'Intercontinental Championship', requirement: 'Complete 3 Main Events', earnedAt: null },
   { id: 'royalrumble', name: 'Royal Rumble Winner', requirement: '30 Opening Contest habits in 30 days', earnedAt: null },
   { id: 'mitb', name: 'Money in the Bank', requirement: 'Move The Big One past 50%', earnedAt: null },
-  { id: 'whc', name: 'World Heavyweight Champion', requirement: 'Complete a main event with 50+ midcard hours', earnedAt: null },
+  { id: 'whc', name: 'World Heavyweight Champion', requirement: 'Complete a Main Event with 50+ segment hours', earnedAt: null },
   { id: 'grandslam', name: 'Grand Slam Champion', requirement: 'Hold 4+ belts simultaneously', earnedAt: null },
 ];
 

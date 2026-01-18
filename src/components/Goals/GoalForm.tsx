@@ -6,71 +6,114 @@ interface GoalFormProps {
   onCancel: () => void;
 }
 
-const tierOptions: { value: GoalTier; label: string; description: string }[] = [
-  { value: 'main', label: 'Main Event ⭐', description: 'Championship moments earned in the midcard' },
-  { value: 'midcard', label: 'Midcard', description: 'Where champions are forged' },
-];
-
 export const GoalForm: React.FC<GoalFormProps> = ({ onSubmit, onCancel }) => {
   const [title, setTitle] = useState('');
-  const [tier, setTier] = useState<GoalTier>('main');
+  const [step, setStep] = useState<'intro' | 'input'>('intro');
 
   const handleSubmit = () => {
     if (title.trim()) {
-      onSubmit(title.trim(), tier);
+      onSubmit(title.trim(), 'main');
     }
   };
 
+  // Intro screen with guidance
+  if (step === 'intro') {
+    return (
+      <div className="card space-y-6">
+        <div className="text-center">
+          <span className="text-4xl">⭐</span>
+          <h3 className="heading-1 mt-2">Main Event</h3>
+          <p className="text-kayfabe-gray-light text-sm mt-2">
+            A monumental achievement worth dedicating your time to
+          </p>
+        </div>
+
+        <div className="space-y-4 text-sm">
+          <div className="bg-kayfabe-gray-dark p-4 rounded">
+            <p className="text-kayfabe-gold font-bold mb-2">This is NOT a task list item.</p>
+            <p className="text-kayfabe-gray-light">
+              Main Events are championships you're earning through daily dedication.
+              Things you'll look back on and say "I did that."
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-kayfabe-cream font-bold">Good Main Events:</p>
+            <ul className="text-kayfabe-gray-light space-y-2 pl-4">
+              <li>• Launch my podcast</li>
+              <li>• Write my novel</li>
+              <li>• Get promoted to senior engineer</li>
+              <li>• Run a marathon</li>
+              <li>• Learn to speak Spanish fluently</li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-kayfabe-cream font-bold">NOT Main Events:</p>
+            <ul className="text-kayfabe-gray-medium space-y-2 pl-4">
+              <li>• Clean my room <span className="text-kayfabe-gray-dark">(that's a segment)</span></li>
+              <li>• Reply to emails <span className="text-kayfabe-gray-dark">(that's a segment)</span></li>
+              <li>• Go to the gym <span className="text-kayfabe-gray-dark">(that's a segment serving a Main Event)</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <p className="text-kayfabe-gold text-xs italic mb-4">
+            Your segments will build toward this. Every hour you book is a step closer.
+          </p>
+        </div>
+
+        <div className="flex space-x-3">
+          <button onClick={onCancel} className="btn-secondary flex-1">
+            Cancel
+          </button>
+          <button
+            onClick={() => setStep('input')}
+            className="btn-primary flex-1"
+          >
+            I'm Ready
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Input screen
   return (
     <div className="card space-y-6">
-      <h3 className="heading-2 text-center">New Storyline</h3>
+      <div className="text-center">
+        <span className="text-4xl">⭐</span>
+        <h3 className="heading-2 mt-2">Name Your Main Event</h3>
+        <p className="text-kayfabe-gray-light text-sm mt-1">
+          What monumental thing are you working toward?
+        </p>
+      </div>
 
       <div>
-        <label className="text-kayfabe-gray-light text-sm block mb-2">
-          What's the storyline?
-        </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g., Launch my podcast, Learn Spanish, Get promoted"
-          className="input-field"
+          placeholder="e.g., Launch my podcast"
+          className="input-field text-lg"
           autoFocus
         />
-      </div>
-
-      <div>
-        <label className="text-kayfabe-gray-light text-sm block mb-3">
-          Where does it go on the card?
-        </label>
-        <div className="space-y-2">
-          {tierOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setTier(option.value)}
-              className={`w-full p-4 border text-left transition-colors ${
-                tier === option.value
-                  ? 'border-kayfabe-gold text-kayfabe-cream'
-                  : 'border-kayfabe-gray-dark text-kayfabe-gray-light hover:border-kayfabe-gray-medium'
-              }`}
-            >
-              <p className="font-bold uppercase tracking-wider text-sm">{option.label}</p>
-              <p className="text-xs mt-1 opacity-75">{option.description}</p>
-            </button>
-          ))}
-        </div>
+        <p className="text-kayfabe-gray-medium text-xs mt-2 text-center">
+          Make it specific. Make it meaningful. Make it yours.
+        </p>
       </div>
 
       <div className="flex space-x-3">
-        <button onClick={onCancel} className="btn-secondary flex-1">
-          Cancel
+        <button onClick={() => setStep('intro')} className="btn-secondary flex-1">
+          Back
         </button>
         <button
           onClick={handleSubmit}
           disabled={!title.trim()}
           className={`btn-primary flex-1 ${!title.trim() ? 'opacity-50' : ''}`}
         >
-          Add Storyline
+          Add Main Event
         </button>
       </div>
     </div>
